@@ -144,6 +144,7 @@
   <ItemGroup>
     <ClInclude Include="png.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="png_implementation_bitwise_readable_stream.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -153,6 +154,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="png.cpp" />
+    <ClCompile Include="png_implementation_bitwise_readable_stream.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,5 +8,9 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#include <cassert>
+#include <concepts>
+#include <cstdint>
+#include <span>
 
 #endif //PCH_H
