@@ -1,9 +1,17 @@
 #include "pch.h"
+#include "png_implementation_bitwise_readable_stream.hpp"
 #include "png_implementation_deflate_algorithm.hpp"
 #include "CppUnitTest.h"
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace png_implementation_deflate_algorithm_tests {
+	bool operator==(const std::span<const std::uint8_t>& first, const std::span<const std::uint8_t>& second) {
+		if (first.size() != second.size()) { return 0; }
+		for (int i{ 0 }; i < first.size(); ++i) {
+			if (first[i] != second[i]) { return 0; }
+		}
+		return 1;
+	}
 	TEST_CLASS(bit_reverse_tests) {
 	public:
 		TEST_METHOD(bit_reverse_test_1) {
@@ -25,43 +33,43 @@ namespace png_implementation_deflate_algorithm_tests {
 			Assert::AreEqual(static_cast<huffman_code_t>(0b100'1001'1101'1011), bit_reverse(0b110'1101'1100'1001, 15));
 		}
 	};
-	TEST_CLASS(huffman_code_reader_tests) {
+	TEST_CLASS(huffman_code_table_tests) {
 	public:
-		TEST_METHOD(huffman_code_reader_test_1) {
+		TEST_METHOD(huffman_code_table_test_1) {
 			std::vector<code_length_t> code_lengths{ 3, 3, 3, 3, 3, 2, 4, 4 };
 			std::uint8_t stream_value{ 0b1111 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
-			huffman_code_reader reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
+			huffman_code_table reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
 			Assert::AreEqual(static_cast<huffman_code_t>(7), reader.peek(stream));
 		}
-		TEST_METHOD(huffman_code_reader_test_2) {
+		TEST_METHOD(huffman_code_table_test_2) {
 			std::vector<code_length_t> code_lengths{ 3, 3, 3, 3, 3, 2, 4, 4 };
 			std::uint8_t stream_value{ 0b0111 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
-			huffman_code_reader reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
+			huffman_code_table reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
 			Assert::AreEqual(static_cast<huffman_code_t>(6), reader.peek(stream));
 		}
-		TEST_METHOD(huffman_code_reader_test_3) {
+		TEST_METHOD(huffman_code_table_test_3) {
 			std::vector<code_length_t> code_lengths{ 3, 3, 3, 3, 3, 2, 4, 4 };
 			std::uint8_t stream_value{ 0b0010 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
-			huffman_code_reader reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
+			huffman_code_table reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
 			Assert::AreEqual(static_cast<huffman_code_t>(0), reader.peek(stream));
 		}
-		TEST_METHOD(huffman_code_reader_test_4) {
+		TEST_METHOD(huffman_code_table_test_4) {
 			std::vector<code_length_t> code_lengths{ 3, 3, 3, 3, 3, 2, 4, 4 };
 			std::uint8_t stream_value{ 0b1010 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
-			huffman_code_reader reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
+			huffman_code_table reader{ { code_lengths.data(), code_lengths.data() + code_lengths.size() } };
 			Assert::AreEqual(static_cast<huffman_code_t>(0), reader.peek(stream));
 		}
-		TEST_METHOD(huffman_code_reader_test_5) {
+		TEST_METHOD(huffman_code_table_test_5) {
 			std::vector<code_length_t> code_lengths_1{ 3, 3, 3, 3, 3, 2, 4, 4 };
 			std::vector<code_length_t> code_lengths_2{ 3, 3, 3, 3, 3, 2, 4, 4, 0, 0, 0 };
 			std::uint8_t stream_value{};
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
-			huffman_code_reader reader_1{ { code_lengths_1.data(), code_lengths_1.data() + code_lengths_1.size() } };
-			huffman_code_reader reader_2{ { code_lengths_2.data(), code_lengths_2.data() + code_lengths_2.size() } };
+			huffman_code_table reader_1{ { code_lengths_1.data(), code_lengths_1.data() + code_lengths_1.size() } };
+			huffman_code_table reader_2{ { code_lengths_2.data(), code_lengths_2.data() + code_lengths_2.size() } };
 			for (std::uint8_t i{ 0 }; i <= 0b1111; ++i) {
 				stream_value = i;
 				if (reader_1.peek(stream) != reader_2.peek(stream)) { Assert::Fail(L"should be equal for all input"); }
@@ -192,5 +200,66 @@ namespace png_implementation_deflate_algorithm_tests {
 			Assert::IsTrue(stream.can_advance(5));
 			Assert::AreEqual(static_cast<std::uint_fast16_t>(0b1'1111), stream.peek(5));
 		}
+	};
+	TEST_CLASS(huffman_code_reader_tests) {
+	public:
+		TEST_METHOD(huffman_code_reader_test_1) {
+			std::vector<code_length_t> code_lengths{ 3, 3, 3, 3, 3, 2, 4, 4 };
+			huffman_code_reader reader; reader.code_lengths = code_lengths;
+			reader.set_table();
+			std::uint8_t stream_value{ 0b1111'0111 };
+			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
+			Assert::AreEqual(static_cast<huffman_code_t>(6), reader.read(stream));
+			Assert::IsTrue(stream.can_advance(4));
+			Assert::AreEqual(static_cast<std::uint_fast16_t>(0b1111), stream.peek(4));
+		}
+	};
+	TEST_CLASS(compress_tests) {
+	public:
+		TEST_METHOD(compress_test_1) {
+				std::uint8_t buffer[500], buffer2[505]{ 1, 2, 3, 4, 5 };
+				for (auto& i : buffer) { i = std::rand() % UINT8_MAX; }
+				std::memcpy(buffer2 + 5, buffer, 500);
+				std::vector<std::uint8_t> compressed, decompressed{ 1, 2, 3, 4, 5 };
+				compress(compressed, { buffer, buffer + 500 });
+				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
+				try {
+					decompress(decompressed, compressed_stream);
+				} catch (...) {
+					Assert::Fail(L"should not throw");
+				}
+				Assert::IsTrue(std::span<const std::uint8_t>{ buffer2, buffer2 + 505 } == std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() });
+			}
+			TEST_METHOD(compress_test_2) {
+				std::uint8_t buffer[500], buffer2[1005]{ 1, 2, 3, 4, 5 };
+				for (auto& i : buffer) { i = std::rand() % UINT8_MAX; }
+				std::memcpy(buffer2 + 5, buffer, 500);
+				std::memcpy(buffer2 + 505, buffer, 500);
+				std::vector<std::uint8_t> compressed, decompressed{ 1, 2, 3, 4, 5 };
+				compress(compressed, { buffer, buffer + 500 });
+				compress(compressed, { buffer, buffer + 500 });
+				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
+				try {
+					decompress(decompressed, compressed_stream);
+					decompress(decompressed, compressed_stream);
+				} catch (...) {
+					Assert::Fail(L"should not throw");
+				}
+				Assert::IsTrue(std::span<const std::uint8_t>{ buffer2, buffer2 + 1005 } == std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() });
+			}
+			TEST_METHOD(compress_test_3) {
+				std::vector<std::uint8_t> buffer, buffer2; buffer.resize(100'000);
+				for (auto& i : buffer) { i = std::rand() % UINT8_MAX; }
+				buffer2 = buffer;
+				std::vector<std::uint8_t> compressed, decompressed;
+				compress(compressed, { buffer.data(), buffer.data() + 100'000 });
+				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
+				try {
+					decompress(decompressed, compressed_stream);
+				} catch (...) {
+					Assert::Fail(L"should not throw");
+				}
+				Assert::IsTrue(buffer2 == decompressed, L"should be equal");
+			}
 	};
 }

@@ -8,5 +8,9 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#include <cstdint>
+#include <cstring>
+#include <span>
+#include <vector>
 
 #endif //PCH_H

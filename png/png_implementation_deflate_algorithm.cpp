@@ -25,9 +25,9 @@ huffman_code_t bit_reverse(huffman_code_t value, code_length_t length) {
 	return lookup_table[length][value];
 }
 
-huffman_code_reader::huffman_code_reader() : max_code_length{ 0 } {}
+huffman_code_table::huffman_code_table() : max_code_length{ 0 } {}
 
-huffman_code_reader::huffman_code_reader(std::span<const code_length_t> code_lengths) {
+huffman_code_table::huffman_code_table(std::span<const code_length_t> code_lengths) {
 	assert(code_lengths.size());
 	max_code_length = *std::max_element(code_lengths.begin(), code_lengths.end());
 	assert(max_code_length <= 15);
@@ -62,7 +62,7 @@ huffman_code_reader::huffman_code_reader(std::span<const code_length_t> code_len
 	}
 }
 
-huffman_code_t huffman_code_reader::peek(const bitwise_readable_stream& current_bitwise_readable_stream) const noexcept {
+huffman_code_t huffman_code_table::peek(const bitwise_readable_stream& current_bitwise_readable_stream) const noexcept {
 	assert(max_code_length);
 	return table[current_bitwise_readable_stream.zero_extended_peek(max_code_length)];
 }
@@ -137,5 +137,139 @@ void handle_code_length_code(std::vector<code_length_t>& out, huffman_code_t sym
 		out.reserve(out.size() + length);
 		while (length--) { out.push_back(0); }
 		return;
+	}
+}
+
+void huffman_code_reader::set_table() {
+	table = std::span<const std::uint8_t>{ code_lengths.data(), code_lengths.data() + code_lengths.size() };
+}
+
+huffman_code_t huffman_code_reader::read(bitwise_readable_stream& compressed) const {
+	huffman_code_t code{ table.peek(compressed) };
+	code_length_t code_length{ code_lengths[code] };
+	if (!compressed.can_advance(code_length)) { throw std::out_of_range{ "" }; }
+	compressed.advance(code_length);
+	return code;
+}
+
+void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compressed) {
+	static const huffman_code_reader fixed_huffman_codes_reader{
+		[]() -> huffman_code_reader {
+			huffman_code_reader temp; temp.code_lengths.resize(288);
+			std::memset(temp.code_lengths.data(), 8, 144);
+			std::memset(temp.code_lengths.data() + 144, 9, 112);
+			std::memset(temp.code_lengths.data() + 256, 7, 24);
+			std::memset(temp.code_lengths.data() + 280, 8, 8);
+			temp.set_table();
+			return temp;
+		} ()
+	};
+	static const huffman_code_reader fixed_distance_codes_reader{
+		[]() -> huffman_code_reader {
+			huffman_code_reader temp; temp.code_lengths = std::vector<code_length_t>(32, 5);
+			temp.set_table();
+			return temp;
+		} ()
+	};
+	huffman_code_reader dynamic_huffman_codes_reader, dynamic_distance_codes_reader;
+	std::uint_fast16_t is_last_block{ 0 }, block_type{ 0 };
+	// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.3
+	while (!is_last_block) {
+		if (!compressed.can_advance(3)) { throw std::out_of_range{ "" }; }
+		is_last_block = compressed.peek(3);
+		compressed.advance(3);
+		block_type = is_last_block & 0b110;
+		is_last_block &= 0b1;
+		if (block_type == 0b110) { throw std::runtime_error{ "" }; }
+		if (block_type == 0b000) {
+			handle_uncompressed_block(out, compressed);
+			continue;
+		}
+		const huffman_code_reader* huffman_codes_reader{ &fixed_huffman_codes_reader }, * distance_codes_reader{ &fixed_distance_codes_reader };
+		if (block_type == 0b100) {
+			if (!compressed.can_advance(14)) { throw std::out_of_range{ "" }; }
+			std::uint_fast16_t literal_length_code_count{ compressed.peek(5) };
+			literal_length_code_count += 257;
+			compressed.advance(5);
+			std::uint_fast16_t distance_code_count{ compressed.peek(5) };
+			++distance_code_count;
+			compressed.advance(5);
+			std::uint_fast16_t code_length_code_count{ compressed.peek(4) };
+			code_length_code_count += 4;
+			compressed.advance(4);
+			huffman_code_reader code_length_code_reader; code_length_code_reader.code_lengths.resize(19);
+			static const std::uint_fast8_t symbol_index[]{ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
+			for (std::uint_fast16_t code_length_code_index{ 0 }; code_length_code_index < code_length_code_count; ++code_length_code_index) {
+				if (!compressed.can_advance(3)) { throw std::out_of_range{ "" }; }
+				std::uint_fast16_t code_length{ compressed.peek(3) };
+				compressed.advance(3);
+				code_length_code_reader.code_lengths[symbol_index[code_length_code_index]] = code_length;
+			}
+			code_length_code_reader.set_table();
+			const std::uint_fast16_t count{ literal_length_code_count + distance_code_count };
+			std::vector<code_length_t> decompressed_code_lengths; decompressed_code_lengths.reserve(count);
+			while (1) {
+				handle_code_length_code(decompressed_code_lengths, code_length_code_reader.read(compressed), compressed);
+				if (decompressed_code_lengths.size() > count) { throw std::runtime_error{ "" }; }
+				if (decompressed_code_lengths.size() == count) { break; }
+			}
+			dynamic_huffman_codes_reader.code_lengths.clear();
+			dynamic_huffman_codes_reader.code_lengths.resize(288, 0);
+			std::memcpy(dynamic_huffman_codes_reader.code_lengths.data(), decompressed_code_lengths.data(), literal_length_code_count);
+			dynamic_huffman_codes_reader.set_table();
+			huffman_codes_reader = &dynamic_huffman_codes_reader;
+			dynamic_huffman_codes_reader.code_lengths.clear();
+			dynamic_huffman_codes_reader.code_lengths.resize(32, 0);
+			std::memcpy(dynamic_distance_codes_reader.code_lengths.data(), decompressed_code_lengths.data() + literal_length_code_count, distance_code_count);
+			dynamic_distance_codes_reader.set_table();
+			distance_codes_reader = &dynamic_distance_codes_reader;
+		}
+		huffman_code_t literal_length_code{ huffman_codes_reader->read(compressed) };
+		if (literal_length_code < 256) {
+			out.push_back(literal_length_code);
+		} else if (literal_length_code == 256) {
+			break;
+		} else {
+			std::uint_fast16_t length{ get_length(compressed, literal_length_code) };
+			std::uint_fast16_t distance{ get_distance(compressed, distance_codes_reader->read(compressed)) };
+			if (out.empty()) { throw std::runtime_error{ "" }; }
+			--distance;
+			while (length--) { out.push_back(out.rbegin()[distance]); }
+		}
+	}
+}
+
+void compress(std::vector<std::uint8_t>& out, std::span<const std::uint8_t> uncompressed) {
+	std::size_t size{ uncompressed.size() };
+	const std::uint8_t* source{ uncompressed.data() };
+	while (size) {
+		if (size <= UINT16_MAX) {
+			out.reserve(out.size() + size + 5);
+			std::uint8_t* destination{ out.data() + out.size() };
+			out.resize(out.size() + size + 5);
+			destination[0] = 1;
+			++destination;
+			destination[0] = size & 0xFF;
+			destination[1] = (size & 0xFF00) >> 8;
+			destination[2] = ~destination[0];
+			destination[3] = ~destination[1];
+			destination += 4;
+			std::memcpy(destination, source, size);
+			size = 0;
+		} else {
+			out.reserve(out.size() + UINT16_MAX + 5);
+			std::uint8_t* destination{ out.data() + out.size() };
+			out.resize(out.size() + UINT16_MAX + 5);
+			destination[0] = 0;
+			++destination;
+			destination[0] = 0xFF;
+			destination[1] = 0xFF;
+			destination[2] = 0x00;
+			destination[3] = 0x00;
+			destination += 4;
+			std::memcpy(destination, source, UINT16_MAX);
+			size -= UINT16_MAX;
+			source += UINT16_MAX;
+		}
 	}
 }

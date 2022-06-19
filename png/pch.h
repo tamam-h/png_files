@@ -12,6 +12,7 @@
 #include <cassert>
 #include <concepts>
 #include <cstdint>
+#include <cstring>
 #include <span>
 #include <stdexcept>
 #include <vector>
