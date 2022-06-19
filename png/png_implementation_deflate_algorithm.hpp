@@ -52,3 +52,15 @@ std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_
 // throws if can't read anymore from compressed
 // advances position in stream after reading
 std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_code_t code);
+
+// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.3 and 3.2.4
+// throws if can't read anymore from compressed
+// throws if (~LEN & 0xFFFF) != NLEN
+// advances to byte before reading LEN
+void handle_uncompressed_block(std::vector<std::uint8_t>& out, bitwise_readable_stream& compressed);
+
+// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.7
+// throws if can't read anymore from compressed
+// assumes symbol is less than 19
+// throws if out is empty and symbol is 16
+void handle_code_length_code(std::vector<code_length_t>& out, huffman_code_t symbol, bitwise_readable_stream& compressed);

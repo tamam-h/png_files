@@ -74,7 +74,19 @@ namespace png_implementation_deflate_algorithm_tests {
 			std::uint8_t stream_value{ 0b1111'1011 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
 			Assert::AreEqual(static_cast<std::uint_fast16_t>(38), get_length(stream, 273));
+			Assert::IsTrue(stream.can_advance(5), L"didn\'t read correct number of bits");
 			Assert::AreEqual(static_cast<std::uint_fast16_t>(31), stream.peek(5), L"didn\'t read correct number of bits");
+		}
+		TEST_METHOD(get_length_test_2) {
+			std::uint8_t stream_value{ 0b1111'1011 };
+			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
+			bool should_fail{ 1 };
+			try {
+				get_length(stream, 286);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
 		}
 	};
 	TEST_CLASS(get_distance_tests) {
@@ -83,7 +95,102 @@ namespace png_implementation_deflate_algorithm_tests {
 			std::uint8_t stream_value{ 0b1111'1011 };
 			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
 			Assert::AreEqual(static_cast<std::uint_fast16_t>(20), get_distance(stream, 8));
+			Assert::IsTrue(stream.can_advance(5), L"didn\'t read correct number of bits");
 			Assert::AreEqual(static_cast<std::uint_fast16_t>(31), stream.peek(5), L"didn\'t read correct number of bits");
+		}
+		TEST_METHOD(get_length_test_2) {
+			std::uint8_t stream_value{ 0b1111'1011 };
+			bitwise_readable_stream stream{ { &stream_value, &stream_value + 1 } };
+			bool should_fail{ 1 };
+			try {
+				get_distance(stream, 30);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(handle_uncompressed_block_tests) {
+	public:
+		TEST_METHOD(handle_uncompressed_block_test_1) {
+			std::uint8_t arr[]{ 0b0000'0000, 0x05, 0x00, 0xFA, 0xFF, 1, 2, 3, 4, 5, 6 };
+			std::vector<std::uint8_t> out{ 27 };
+			bitwise_readable_stream compressed{ { arr, arr + sizeof(arr) } };
+			compressed.advance(1);
+			handle_uncompressed_block(out, compressed);
+			if (out != std::vector<std::uint8_t>{ 27, 1, 2, 3, 4, 5 }) {
+				Assert::Fail(L"output is not equal");
+			}
+			Assert::IsTrue(compressed.can_advance(8));
+			Assert::AreEqual(static_cast<std::uint_fast16_t>(6), compressed.peek(8));
+		}
+		TEST_METHOD(handle_uncompressed_block_test_2) {
+			std::uint8_t arr[]{ 0b0000'0000, 0x05, 0x00, 0xFA, 0xFF, 1, 2, 3, 4 };
+			std::vector<std::uint8_t> out{ 27 };
+			bitwise_readable_stream compressed{ { arr, arr + sizeof(arr) } };
+			compressed.advance(1);
+			bool should_fail{ 1 };
+			try {
+				handle_uncompressed_block(out, compressed);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(handle_uncompressed_block_test_3) {
+			std::uint8_t arr[]{ 0b0000'0000, 0x00, 0x05, 0xFF, 0xFF, 1, 2, 3, 4, 5 };
+			std::vector<std::uint8_t> out{ 27 };
+			bitwise_readable_stream compressed{ { arr, arr + sizeof(arr) } };
+			compressed.advance(1);
+			bool should_fail{ 1 };
+			try {
+				handle_uncompressed_block(out, compressed);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(handle_code_length_code_tests) {
+	public:
+		TEST_METHOD(handle_code_length_code_test_1) {
+			std::vector<code_length_t> out{ 5 };
+			std::uint8_t stream_contents{ 13 };
+			bitwise_readable_stream stream{ { &stream_contents, &stream_contents + 1 } };
+			handle_code_length_code(out, 15, stream);
+			Assert::IsTrue(out == std::vector<code_length_t>{ 5, 15 });
+			Assert::IsTrue(stream.can_advance(8));
+			Assert::AreEqual(static_cast<std::uint_fast16_t>(13), stream.peek(8));
+		}
+		TEST_METHOD(handle_code_length_code_test_2) {
+			std::vector<code_length_t> out{ 5 };
+			std::uint8_t stream_contents{ 0b1111'1101 };
+			bitwise_readable_stream stream{ { &stream_contents, &stream_contents + 1 } };
+			handle_code_length_code(out, 16, stream);
+			Assert::IsTrue(out == std::vector<code_length_t>{ 5, 5, 5, 5, 5 });
+			Assert::IsTrue(stream.can_advance(6));
+			Assert::AreEqual(static_cast<std::uint_fast16_t>(0b11'1111), stream.peek(6));
+		}
+		TEST_METHOD(handle_code_length_code_test_3) {
+			std::vector<code_length_t> out{};
+			std::uint8_t stream_contents{ 0b1111'1101 };
+			bitwise_readable_stream stream{ { &stream_contents, &stream_contents + 1 } };
+			bool should_fail{ 1 };
+			try {
+				handle_code_length_code(out, 16, stream);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(handle_code_length_code_test_4) {
+			std::vector<code_length_t> out{ 5 };
+			std::uint8_t stream_contents{ 0b1111'1001 };
+			bitwise_readable_stream stream{ { &stream_contents, &stream_contents + 1 } };
+			handle_code_length_code(out, 17, stream);
+			Assert::IsTrue(out == std::vector<code_length_t>{ 5, 0, 0, 0, 0 });
+			Assert::IsTrue(stream.can_advance(5));
+			Assert::AreEqual(static_cast<std::uint_fast16_t>(0b1'1111), stream.peek(5));
 		}
 	};
 }

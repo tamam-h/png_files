@@ -96,3 +96,46 @@ std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_cod
 	}
 	return acc;
 }
+
+void handle_uncompressed_block(std::vector<std::uint8_t>& out, bitwise_readable_stream& compressed) {
+	compressed.advance_to_byte();
+	if (!compressed.can_advance(32)) { throw std::out_of_range{ "" }; }
+	const std::uint8_t* position{ compressed.get_position() };
+	std::uint_fast16_t length{ static_cast<std::uint_fast16_t>(position[0] | position[1] << 8) }, complement_of_length{ static_cast<std::uint_fast16_t>(position[2] | position[3] << 8) };
+	if ((~length & 0xFFFF) != complement_of_length) { throw std::runtime_error{ "" }; }
+	compressed.advance(32);
+	if (!compressed.can_advance(length * 8)) { throw std::out_of_range{ "" }; }
+	out.resize(out.size() + length);
+	std::memcpy(out.data() + out.size() - length, compressed.get_position(), length);
+	compressed.advance(length * 8);
+}
+
+void handle_code_length_code(std::vector<code_length_t>& out, huffman_code_t symbol, bitwise_readable_stream& compressed) {
+	assert(symbol < 19);
+	if (symbol <= 15) {
+		out.push_back(static_cast<code_length_t>(symbol));
+		return;
+	}
+	std::uint_fast8_t bit_counts[]{ 2, 3, 7 }, bit_count{ bit_counts[symbol - 16] };
+	if (!compressed.can_advance(bit_count)) { throw std::out_of_range{ "" }; }
+	std::uint_fast8_t length{ static_cast<std::uint_fast8_t>(compressed.peek(bit_count)) };
+	compressed.advance(bit_count);
+	switch (symbol) {
+	case 16:
+		length += 3;
+		out.reserve(out.size() + length);
+		if (out.empty()) { throw std::runtime_error{ "" }; }
+		while (length--) { out.push_back(out.back()); }
+		return;
+	case 17:
+		length += 3;
+		out.reserve(out.size() + length);
+		while (length--) { out.push_back(0); }
+		return;
+	case 18:
+		length += 11;
+		out.reserve(out.size() + length);
+		while (length--) { out.push_back(0); }
+		return;
+	}
+}
