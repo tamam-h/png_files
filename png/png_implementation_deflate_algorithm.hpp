@@ -38,3 +38,17 @@ private:
 	std::vector<huffman_code_t> table;
 	code_length_t max_code_length;
 };
+
+// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.5
+// assumes code is between 257 and 285 inclusive
+// throws if code is 286 or 287
+// throws if can't read anymore from compressed
+// advances position in stream after reading
+std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_t code);
+
+// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.5
+// assumes code is between 0 and 29 inclusive
+// throws if code is 30 or 31
+// throws if can't read anymore from compressed
+// advances position in stream after reading
+std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_code_t code);

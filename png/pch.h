@@ -8,10 +8,12 @@
 #define PCH_H
 
 // add headers that you want to pre-compile here
+#include <algorithm>
 #include <cassert>
 #include <concepts>
 #include <cstdint>
 #include <span>
+#include <stdexcept>
 #include <vector>
 
 #endif //PCH_H
