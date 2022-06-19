@@ -12,5 +12,6 @@
 #include <concepts>
 #include <cstdint>
 #include <span>
+#include <vector>
 
 #endif //PCH_H

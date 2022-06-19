@@ -145,6 +145,7 @@
     <ClInclude Include="png.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="png_implementation_bitwise_readable_stream.hpp" />
+    <ClInclude Include="png_implementation_deflate_algorithm.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -155,6 +156,7 @@
     </ClCompile>
     <ClCompile Include="png.cpp" />
     <ClCompile Include="png_implementation_bitwise_readable_stream.cpp" />
+    <ClCompile Include="png_implementation_deflate_algorithm.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
