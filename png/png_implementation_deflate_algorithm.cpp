@@ -218,23 +218,25 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 			std::memcpy(dynamic_huffman_codes_reader.code_lengths.data(), decompressed_code_lengths.data(), literal_length_code_count);
 			dynamic_huffman_codes_reader.set_table();
 			huffman_codes_reader = &dynamic_huffman_codes_reader;
-			dynamic_huffman_codes_reader.code_lengths.clear();
-			dynamic_huffman_codes_reader.code_lengths.resize(32, 0);
+			dynamic_distance_codes_reader.code_lengths.clear();
+			dynamic_distance_codes_reader.code_lengths.resize(32, 0);
 			std::memcpy(dynamic_distance_codes_reader.code_lengths.data(), decompressed_code_lengths.data() + literal_length_code_count, distance_code_count);
 			dynamic_distance_codes_reader.set_table();
 			distance_codes_reader = &dynamic_distance_codes_reader;
 		}
-		huffman_code_t literal_length_code{ huffman_codes_reader->read(compressed) };
-		if (literal_length_code < 256) {
-			out.push_back(literal_length_code);
-		} else if (literal_length_code == 256) {
-			break;
-		} else {
-			std::uint_fast16_t length{ get_length(compressed, literal_length_code) };
-			std::uint_fast16_t distance{ get_distance(compressed, distance_codes_reader->read(compressed)) };
-			if (out.empty()) { throw std::runtime_error{ "" }; }
-			--distance;
-			while (length--) { out.push_back(out.rbegin()[distance]); }
+		while (1) {
+			huffman_code_t literal_length_code{ huffman_codes_reader->read(compressed) };
+			if (literal_length_code < 256) {
+				out.push_back(literal_length_code);
+			} else if (literal_length_code == 256) {
+				break;
+			} else {
+				std::uint_fast16_t length{ get_length(compressed, literal_length_code) };
+				std::uint_fast16_t distance{ get_distance(compressed, distance_codes_reader->read(compressed)) };
+				if (out.empty()) { throw std::runtime_error{ "" }; }
+				--distance;
+				while (length--) { out.push_back(out.rbegin()[distance]); }
+			}
 		}
 	}
 }

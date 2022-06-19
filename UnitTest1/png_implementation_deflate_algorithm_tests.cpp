@@ -262,4 +262,70 @@ namespace png_implementation_deflate_algorithm_tests {
 				Assert::IsTrue(buffer2 == decompressed, L"should be equal");
 			}
 	};
+	TEST_CLASS(decompress_tests) {
+		TEST_METHOD(decompress_test_1) {
+			const char answer[]{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdjhdskhfsjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj" };
+			const std::uint8_t compressed[]{ 0x4b, 0x24, 0x12, 0x24, 0x11, 0x00, 0x29, 0x59, 0x19, 0x29, 0xc5, 0xd9, 0x19, 0x69, 0xc5, 0x59, 0x44, 0x01, 0x00 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 19 } };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				Assert::Fail(L"should not throw");
+			}
+			Assert::IsTrue(
+				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 119) }
+					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
+				L"should be equal"
+			);
+		}
+		TEST_METHOD(decompress_test_2) {
+			const char answer[]{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" };
+			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				Assert::Fail(L"should not throw");
+			}
+			Assert::IsTrue(
+				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 34) }
+					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
+				L"should be equal"
+			);
+		}
+		TEST_METHOD(decompress_test_3) {
+			const char answer[]{ "a" };
+			const std::uint8_t compressed[]{ 0x4b, 0x04, 0x00 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 3 } };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				Assert::Fail(L"should not throw");
+			}
+			Assert::IsTrue(
+				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 1) }
+					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
+				L"should be equal"
+			);
+		}
+		TEST_METHOD(decompress_test_4) {
+			const char answer[]{ "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaabbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbdjhdskhfsjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj" };
+			const std::uint8_t compressed[]{ 0x8d, 0xc1, 0xc1, 0x09, 0x00, 0x00, 0x08, 0x02, 0xc0, 0x59, 0x0b, 0x09, 0xb1, 0xa7, 0xfb, 0x43, 0x23, 0xe4, 0x5d, 0x85, 0xfa, 0x01, 0x11, 0x5e, 0x8e, 0x15, 0x39 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 27 } };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				Assert::Fail(L"should not throw");
+			}
+			Assert::IsTrue(
+				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 119) }
+					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
+				L"should be equal"
+			);
+		}
+	};
 }
