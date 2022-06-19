@@ -42,7 +42,6 @@ void zlib_stream_handler::decompress() {
 	if (second_byte & 0b10'0000) { throw std::runtime_error{ "" }; }
 	bitwise_readable_stream stream{ { compressed_data.data() + 2, compressed_data.data() + compressed_data.size() - 4 } };
 	::decompress(uncompressed_data, stream);
-	if (stream.can_advance(1)) { throw std::runtime_error{ "" }; }
 	std::uint_fast32_t checksum{ 0 };
 	checksum |= compressed_data.rbegin()[0];
 	checksum |= compressed_data.rbegin()[1] << 8;
