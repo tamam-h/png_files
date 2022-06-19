@@ -167,6 +167,7 @@
     </ClCompile>
     <ClCompile Include="png_implementation_bitwise_readable_stream_tests.cpp" />
     <ClCompile Include="png_implementation_deflate_algorithm_tests.cpp" />
+    <ClCompile Include="png_implementation_zlib_stream_tests.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />

@@ -10,6 +10,7 @@
 // add headers that you want to pre-compile here
 #include <cstdint>
 #include <cstring>
+#include <cstdlib>
 #include <span>
 #include <vector>
 
