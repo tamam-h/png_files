@@ -30,6 +30,15 @@
     <ClInclude Include="png_implementation_zlib_stream.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="png_implementation_chunk_factory.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="png_implementation_image_data.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="png_implementation_pixel_types.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="png.cpp">
@@ -45,6 +54,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="png_implementation_zlib_stream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="png_implementation_chunk_factory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="png_implementation_image_data.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

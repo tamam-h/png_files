@@ -145,7 +145,10 @@
     <ClInclude Include="png.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="png_implementation_bitwise_readable_stream.hpp" />
+    <ClInclude Include="png_implementation_chunk_factory.hpp" />
     <ClInclude Include="png_implementation_deflate_algorithm.hpp" />
+    <ClInclude Include="png_implementation_image_data.hpp" />
+    <ClInclude Include="png_implementation_pixel_types.hpp" />
     <ClInclude Include="png_implementation_zlib_stream.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -157,7 +160,9 @@
     </ClCompile>
     <ClCompile Include="png.cpp" />
     <ClCompile Include="png_implementation_bitwise_readable_stream.cpp" />
+    <ClCompile Include="png_implementation_chunk_factory.cpp" />
     <ClCompile Include="png_implementation_deflate_algorithm.cpp" />
+    <ClCompile Include="png_implementation_image_data.cpp" />
     <ClCompile Include="png_implementation_zlib_stream.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
