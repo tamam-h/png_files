@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cstdlib>
+#include <ctime>
 #include <span>
 #include <vector>
 

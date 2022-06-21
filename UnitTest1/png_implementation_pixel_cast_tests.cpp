@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "png_implementation_pixel_cast.hpp"
+#include "png_implementation_pixel_types.hpp"
 #include <CppUnitTest.h>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
