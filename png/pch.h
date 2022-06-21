@@ -10,11 +10,14 @@
 // add headers that you want to pre-compile here
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <concepts>
 #include <cstdint>
 #include <cstring>
 #include <span>
 #include <stdexcept>
+#include <type_traits>
+#include <variant>
 #include <vector>
 
 #endif //PCH_H
