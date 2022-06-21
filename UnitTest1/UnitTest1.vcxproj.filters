@@ -27,6 +27,9 @@
     <ClCompile Include="png_implementation_zlib_stream_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="png_implementation_pixel_cast_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
