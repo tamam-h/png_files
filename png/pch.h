@@ -14,6 +14,8 @@
 #include <concepts>
 #include <cstdint>
 #include <cstring>
+#include <map>
+#include <memory>
 #include <span>
 #include <stdexcept>
 #include <type_traits>

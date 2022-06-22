@@ -29,7 +29,7 @@ namespace image_data_tests {
 			curr.convert_to<greyscale_16>();
 			curr.get_array<greyscale_16>();
 			double time{ static_cast<double>(std::clock() - start) / CLOCKS_PER_SEC };
-			Assert::IsTrue(time <= 0.001);
+			Assert::IsTrue(time <= 0.0011);
 		}
 		TEST_METHOD(convert_to_test_2) {
 			std::vector<std::vector<greyscale_16>> grid(25, std::vector<greyscale_16>(25));

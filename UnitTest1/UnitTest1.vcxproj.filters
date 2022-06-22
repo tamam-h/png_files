@@ -33,6 +33,9 @@
     <ClCompile Include="png_implementation_bitwise_readable_stream_tests.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="png_implementation_chunk_factory_tests.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

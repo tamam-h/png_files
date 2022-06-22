@@ -223,11 +223,7 @@ namespace png_implementation_deflate_algorithm_tests {
 				std::vector<std::uint8_t> compressed, decompressed{ 1, 2, 3, 4, 5 };
 				compress(compressed, { buffer, buffer + 500 });
 				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
-				try {
-					decompress(decompressed, compressed_stream);
-				} catch (...) {
-					Assert::Fail(L"should not throw");
-				}
+				decompress(decompressed, compressed_stream);
 				Assert::IsTrue(std::span<const std::uint8_t>{ buffer2, buffer2 + 505 } == std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() });
 			}
 			TEST_METHOD(compress_test_2) {
@@ -239,12 +235,8 @@ namespace png_implementation_deflate_algorithm_tests {
 				compress(compressed, { buffer, buffer + 500 });
 				compress(compressed, { buffer, buffer + 500 });
 				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
-				try {
-					decompress(decompressed, compressed_stream);
-					decompress(decompressed, compressed_stream);
-				} catch (...) {
-					Assert::Fail(L"should not throw");
-				}
+				decompress(decompressed, compressed_stream);
+				decompress(decompressed, compressed_stream);
 				Assert::IsTrue(std::span<const std::uint8_t>{ buffer2, buffer2 + 1005 } == std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() });
 			}
 			TEST_METHOD(compress_test_3) {
@@ -254,11 +246,7 @@ namespace png_implementation_deflate_algorithm_tests {
 				std::vector<std::uint8_t> compressed, decompressed;
 				compress(compressed, { buffer.data(), buffer.data() + 100'000 });
 				bitwise_readable_stream compressed_stream{ { compressed.data(), compressed.data() + compressed.size() } };
-				try {
-					decompress(decompressed, compressed_stream);
-				} catch (...) {
-					Assert::Fail(L"should not throw");
-				}
+				decompress(decompressed, compressed_stream);
 				Assert::IsTrue(buffer2 == decompressed, L"should be equal");
 			}
 	};
@@ -268,11 +256,7 @@ namespace png_implementation_deflate_algorithm_tests {
 			const std::uint8_t compressed[]{ 0x4b, 0x24, 0x12, 0x24, 0x11, 0x00, 0x29, 0x59, 0x19, 0x29, 0xc5, 0xd9, 0x19, 0x69, 0xc5, 0x59, 0x44, 0x01, 0x00 };
 			std::vector<std::uint8_t> decompressed;
 			bitwise_readable_stream brs{ { compressed, compressed + 19 } };
-			try {
-				decompress(decompressed, brs);
-			} catch (...) {
-				Assert::Fail(L"should not throw");
-			}
+			decompress(decompressed, brs);
 			Assert::IsTrue(
 				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 119) }
 					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
@@ -284,11 +268,7 @@ namespace png_implementation_deflate_algorithm_tests {
 			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
 			std::vector<std::uint8_t> decompressed;
 			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
-			try {
-				decompress(decompressed, brs);
-			} catch (...) {
-				Assert::Fail(L"should not throw");
-			}
+			decompress(decompressed, brs);
 			Assert::IsTrue(
 				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 34) }
 					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
@@ -300,11 +280,7 @@ namespace png_implementation_deflate_algorithm_tests {
 			const std::uint8_t compressed[]{ 0x4b, 0x04, 0x00 };
 			std::vector<std::uint8_t> decompressed;
 			bitwise_readable_stream brs{ { compressed, compressed + 3 } };
-			try {
-				decompress(decompressed, brs);
-			} catch (...) {
-				Assert::Fail(L"should not throw");
-			}
+			decompress(decompressed, brs);
 			Assert::IsTrue(
 				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 1) }
 					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
@@ -316,16 +292,61 @@ namespace png_implementation_deflate_algorithm_tests {
 			const std::uint8_t compressed[]{ 0x8d, 0xc1, 0xc1, 0x09, 0x00, 0x00, 0x08, 0x02, 0xc0, 0x59, 0x0b, 0x09, 0xb1, 0xa7, 0xfb, 0x43, 0x23, 0xe4, 0x5d, 0x85, 0xfa, 0x01, 0x11, 0x5e, 0x8e, 0x15, 0x39 };
 			std::vector<std::uint8_t> decompressed;
 			bitwise_readable_stream brs{ { compressed, compressed + 27 } };
-			try {
-				decompress(decompressed, brs);
-			} catch (...) {
-				Assert::Fail(L"should not throw");
-			}
+			decompress(decompressed, brs);
 			Assert::IsTrue(
 				std::span<const std::uint8_t>{ reinterpret_cast<const std::uint8_t*>(answer), reinterpret_cast<const std::uint8_t*>(answer + 119) }
 					== std::span<const std::uint8_t>{ decompressed.data(), decompressed.data() + decompressed.size() },
 				L"should be equal"
 			);
+		}
+		TEST_METHOD(decompress_test_5) {
+			const std::uint8_t compressed[]{ 0x4b, 0x24, 0x12, 0x24, 0x11, 0x00, 0x29, 0x59, 0x19, 0x29, 0xc5, 0xd9, 0x19 ^ 0b0000'1000, 0x69, 0xc5, 0x59, 0x44, 0x01, 0x00 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 19 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_6) {
+			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00 ^ 0b1000'0000, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_7) {
+			const char answer[]{ "a" };
+			const std::uint8_t compressed[]{ 0x4b ^ 0b0000'0001, 0x04, 0x00 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 3 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_8) {
+			const std::uint8_t compressed[]{ 0x8d, 0xc1, 0xc1, 0x09, 0x00, 0x00, 0x08, 0x02, 0xc0, 0x59, 0x0b, 0x09, 0xb1, 0xa7, 0xfb, 0x43, 0x23, 0xe4, 0x5d, 0x85, 0xfa, 0x01, 0x11, 0x5e, 0x8e, 0x15, 0x39 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 27 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
 		}
 	};
 }
