@@ -16,7 +16,7 @@ using code_length_t = std::uint_fast8_t;
 using huffman_code_t = std::uint_fast16_t;
 
 // reverses order of std::uint_fast8_t length least significant bits in std::uint_fast16_t value
-// the other bits are assumed to be zero
+// throws if other bits are not 0
 // assumes length is less than or equal to 15
 huffman_code_t bit_reverse(huffman_code_t value, code_length_t length);
 

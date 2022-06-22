@@ -3,7 +3,7 @@
 
 huffman_code_t bit_reverse(huffman_code_t value, code_length_t length) {
 	assert(length <= 15);
-	assert(value < static_cast<huffman_code_t>(1 << length));
+	if (value >= static_cast<huffman_code_t>(1 << length)) { throw std::runtime_error{ "" }; }
 	static const std::vector<std::vector<huffman_code_t>> lookup_table{
 		[]() -> std::vector<std::vector<huffman_code_t>> {
 			std::vector<std::vector<huffman_code_t>> table(16);

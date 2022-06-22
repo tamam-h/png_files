@@ -300,18 +300,6 @@ namespace png_implementation_deflate_algorithm_tests {
 			);
 		}
 		TEST_METHOD(decompress_test_5) {
-			const std::uint8_t compressed[]{ 0x4b, 0x24, 0x12, 0x24, 0x11, 0x00, 0x29, 0x59, 0x19, 0x29, 0xc5, 0xd9, 0x19 ^ 0b0000'1000, 0x69, 0xc5, 0x59, 0x44, 0x01, 0x00 };
-			std::vector<std::uint8_t> decompressed;
-			bitwise_readable_stream brs{ { compressed, compressed + 19 } };
-			bool should_fail{ 1 };
-			try {
-				decompress(decompressed, brs);
-			} catch (...) {
-				should_fail = 0;
-			}
-			Assert::IsFalse(should_fail);
-		}
-		TEST_METHOD(decompress_test_6) {
 			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00 ^ 0b1000'0000, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
 			std::vector<std::uint8_t> decompressed;
 			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
@@ -323,7 +311,7 @@ namespace png_implementation_deflate_algorithm_tests {
 			}
 			Assert::IsFalse(should_fail);
 		}
-		TEST_METHOD(decompress_test_7) {
+		TEST_METHOD(decompress_test_6) {
 			const char answer[]{ "a" };
 			const std::uint8_t compressed[]{ 0x4b ^ 0b0000'0001, 0x04, 0x00 };
 			std::vector<std::uint8_t> decompressed;
@@ -336,10 +324,46 @@ namespace png_implementation_deflate_algorithm_tests {
 			}
 			Assert::IsFalse(should_fail);
 		}
-		TEST_METHOD(decompress_test_8) {
-			const std::uint8_t compressed[]{ 0x8d, 0xc1, 0xc1, 0x09, 0x00, 0x00, 0x08, 0x02, 0xc0, 0x59, 0x0b, 0x09, 0xb1, 0xa7, 0xfb, 0x43, 0x23, 0xe4, 0x5d, 0x85, 0xfa, 0x01, 0x11, 0x5e, 0x8e, 0x15, 0x39 };
+		TEST_METHOD(decompress_test_7) {
+			const std::uint8_t compressed[]{ 0x85 ^ 0b0000'0110, 0xc1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
 			std::vector<std::uint8_t> decompressed;
-			bitwise_readable_stream brs{ { compressed, compressed + 27 } };
+			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_8) {
+			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00 ^ 0b0000'0100, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_9) {
+			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00 ^ 0b0001'0000, 0x00, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2, 0x01 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 16 } };
+			bool should_fail{ 1 };
+			try {
+				decompress(decompressed, brs);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(decompress_test_10) {
+			const std::uint8_t compressed[]{ 0x85, 0xc1, 0x81, 0x00, 0x00, 0x00, 0x00, 0x80, 0x20, 0xd6, 0xfd, 0x25, 0x46, 0xa8, 0xa2 };
+			std::vector<std::uint8_t> decompressed;
+			bitwise_readable_stream brs{ { compressed, compressed + 15 } };
 			bool should_fail{ 1 };
 			try {
 				decompress(decompressed, brs);
