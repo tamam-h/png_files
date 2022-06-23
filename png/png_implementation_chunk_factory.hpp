@@ -7,20 +7,19 @@
 
 using chunk_type_t = std::uint_fast32_t;
 
+// data used by chunk_base::set_image_data
+struct image_construction_data {
+
+};
+
 struct chunk_base {
 	// 32 bit integer representing type
 	// most significant byte is first byte in chunk type
 	// least significant byte is fourth byte in chunk type
-	virtual chunk_type_t get_type() = 0;
+	virtual chunk_type_t get_type() const = 0;
 	// function to set image data after private chunk data is set
-	// chunks is a vector of all chunks that will be used to set image data
-	// index is the index of this chunk
-	virtual void set_image_data(const std::vector<std::unique_ptr<chunk_base>>& chunks, unsigned int index, image_data& out) = 0;
-	// function to write chuck data to out
-	// function should not write type or CRC-32 value
-	virtual void write_chunk_data(std::vector<std::uint8_t>& out) = 0;
-	// returns the number of bytes that will be written to out if write_chunk_data is called
-	virtual std::uint_fast32_t get_chunk_size() = 0;
+	// set_image_data should throw if it is detected that there is an issue with other chunks
+	virtual void set_image_data(image_construction_data& construction_data, image_data& out) = 0;
 	virtual ~chunk_base();
 };
 
@@ -53,13 +52,10 @@ void clear_chunk_type_registry();
 
 // this chunk type is special and should not be registered
 struct unknown_chunk : chunk_base {
-	chunk_type_t get_type() override;
-	void set_image_data(const std::vector<std::unique_ptr<chunk_base>>& chunks, unsigned int index, image_data& out) override;
-	void write_chunk_data(std::vector<std::uint8_t>& out) override;
-	std::uint_fast32_t get_chunk_size() override;
+	chunk_type_t get_type() const override;
+	void set_image_data(image_construction_data& construction_data, image_data& out) override;
 	unknown_chunk(std::span<const std::uint8_t> content, chunk_type_t chunk_type);
 private:
-	const std::vector<std::uint8_t> content;
 	const chunk_type_t chunk_type;
 };
 
@@ -97,14 +93,23 @@ std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const s
 // assumes position is at first element of out or beyond
 void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out);
 
-// constant that specifies the chunk type of IEND
-constexpr chunk_type_t end_chunk_type{ static_cast<chunk_type_t>(73) << 24
-	| static_cast<chunk_type_t>(69) << 16
-	| static_cast<chunk_type_t>(78) << 8
-	| static_cast<chunk_type_t>(68) };
+// reads a 1 byte unsigned integer from in at position
+// throws if can't read from that position
+// advances position
+// assumes position is at first element of in or beyond
+std::uint_fast8_t read_1(const std::uint8_t*& position, const std::span<const std::uint8_t>& in);
+
+// writes an 1 byte unsigned integer to position[0] and then advances position
+// throws if can't write to that position
+// assumes position is at first element of out or beyond
+void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out);
+
+// type of last chunk
+constexpr chunk_type_t end_chunk_type{ 0x4945'4e44 };
 
 // creates chunks from in
 // outputs chunks to out
 // throws if there is an error reading
-// throws if a chunk of end_chunk_type is not at end
+// terminates when end_chunk_type found
+// throws if end_chunk_type not found
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in);

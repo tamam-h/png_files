@@ -57,24 +57,13 @@ void clear_chunk_type_registry() {
 
 chunk_base::~chunk_base() {}
 
-unknown_chunk::unknown_chunk(std::span<const std::uint8_t> content, chunk_type_t chunk_type) : content{ content.begin(), content.end() }, chunk_type{ chunk_type } {}
+unknown_chunk::unknown_chunk(std::span<const std::uint8_t> content, chunk_type_t chunk_type) : chunk_type{ chunk_type } {}
 
-chunk_type_t unknown_chunk::get_type() {
+chunk_type_t unknown_chunk::get_type() const {
 	return chunk_type;
 }
 
-void unknown_chunk::set_image_data(const std::vector<std::unique_ptr<chunk_base>>& chunks, unsigned int index, image_data& out) {}
-
-void unknown_chunk::write_chunk_data(std::vector<std::uint8_t>& out) {
-	out.reserve(out.size() + content.size());
-	std::uint8_t* destination{ out.data() + out.size() };
-	out.resize(out.size() + content.size());
-	std::memcpy(destination, content.data(), content.size());
-}
-
-std::uint_fast32_t unknown_chunk::get_chunk_size() {
-	return static_cast<std::uint_fast32_t>(content.size());
-}
+void unknown_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {}
 
 void assert_can_read(const std::uint8_t* position, const std::span<const std::uint8_t>& in) {
 	assert(position >= in.data());
@@ -92,6 +81,12 @@ std::uint_fast32_t read_4(const std::uint8_t*& position, const std::span<const s
 		| static_cast<std::uint_fast32_t>(position[3]) };
 	position += 4;
 	return acc;
+}
+
+std::uint_fast8_t read_1(const std::uint8_t*& position, const std::span<const std::uint8_t>& in) {
+	assert(position >= in.data());
+	assert_can_read(position, in);
+	return *position++;
 }
 
 void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
@@ -133,17 +128,22 @@ void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<
 	position += 8;
 }
 
+void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
+	assert(position >= out.data());
+	assert_can_read(position, out);
+	*position++ = value;
+}
+
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in) {
 	const std::uint8_t* position{ in.data() };
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.2
 	if (read_8(position, in) != (137ull << 56 | 80ull << 48 | 78ull << 40 | 71ull << 32 | 13ull << 24 | 10ull << 16 | 26ull << 8 | 10ull)) { throw std::runtime_error{ "" }; }
-	while (position < in.data() + in.size()) {
+	while (1) {
 		std::uint32_t chunk_size{ read_4(position, in) };
 		// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.3
 		if (chunk_size > INT32_MAX) { throw std::runtime_error{ "" }; }
 		chunk_type_t chunk_type{ static_cast<chunk_type_t>(read_4(position, in)) };
 		if (!is_valid_chunk_type(chunk_type)) { throw std::runtime_error{ "" }; }
-		if (reserved_bit_set(chunk_type)) { throw std::runtime_error{ "" }; }
 		assert_can_read(position + chunk_size - 1, in);
 		std::uint_fast32_t crc{ crc32({ position - 4, position + chunk_size - 4 }) };
 		position += chunk_size - 4;
@@ -155,7 +155,6 @@ void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<cons
 		} else {
 			out.emplace_back(it->second({ position - chunk_size - 4, position - 4 }, out));
 		}
+		if (chunk_type == end_chunk_type) { break; }
 	}
-	if (out.empty()) { throw std::runtime_error{ "" }; }
-	if (out.back()->get_type() != end_chunk_type) { throw std::runtime_error{ "" }; }
 }

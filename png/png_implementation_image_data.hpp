@@ -1,4 +1,6 @@
 #pragma once
+#include <cstdint>
+#include <map>
 #include <variant>
 #include <vector>
 #include "png_implementation_pixel_types.hpp"
