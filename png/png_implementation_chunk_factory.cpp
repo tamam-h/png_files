@@ -68,7 +68,7 @@ void unknown_chunk::set_image_data(image_construction_data& construction_data, i
 void assert_can_read(const std::uint8_t* position, const std::span<const std::uint8_t>& in) {
 	assert(position >= in.data());
 	if (position >= in.data() + in.size()) {
-		throw std::out_of_range{ "" };
+		throw std::out_of_range{ "can\'t read from that position" };
 	}
 }
 
@@ -137,20 +137,20 @@ void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<s
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in) {
 	const std::uint8_t* position{ in.data() };
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.2
-	if (read_8(position, in) != (137ull << 56 | 80ull << 48 | 78ull << 40 | 71ull << 32 | 13ull << 24 | 10ull << 16 | 26ull << 8 | 10ull)) { throw std::runtime_error{ "" }; }
+	if (read_8(position, in) != (137ull << 56 | 80ull << 48 | 78ull << 40 | 71ull << 32 | 13ull << 24 | 10ull << 16 | 26ull << 8 | 10ull)) { throw std::runtime_error{ "file header is different than expected" }; }
 	while (1) {
 		std::uint32_t chunk_size{ read_4(position, in) };
 		// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.3
-		if (chunk_size > INT32_MAX) { throw std::runtime_error{ "" }; }
+		if (chunk_size > INT32_MAX) { throw std::runtime_error{ "chunk size is larger than allowed" }; }
 		chunk_type_t chunk_type{ static_cast<chunk_type_t>(read_4(position, in)) };
-		if (!is_valid_chunk_type(chunk_type)) { throw std::runtime_error{ "" }; }
+		if (!is_valid_chunk_type(chunk_type)) { throw std::runtime_error{ "chunk type is not valid" }; }
 		assert_can_read(position + chunk_size - 1, in);
 		std::uint_fast32_t crc{ crc32({ position - 4, position + chunk_size - 4 }) };
 		position += chunk_size - 4;
-		if (crc != read_4(position, in)) { throw std::runtime_error{ "" }; }
+		if (crc != read_4(position, in)) { throw std::runtime_error{ "stated CRC-32 does not match calculated CRC-32" }; }
 		decltype(chunk_type_registry)::iterator it{ chunk_type_registry.find(chunk_type) };
 		if (it == chunk_type_registry.end()) {
-			if (is_critical_chunk_type(chunk_type)) { throw std::runtime_error{ "" }; }
+			if (is_critical_chunk_type(chunk_type)) { throw std::runtime_error{ "found critical chunk but chunk type is unknown" }; }
 			out.emplace_back(new unknown_chunk{ { position - chunk_size - 4, position - 4 }, chunk_type });
 		} else {
 			out.emplace_back(it->second({ position - chunk_size - 4, position - 4 }, out));

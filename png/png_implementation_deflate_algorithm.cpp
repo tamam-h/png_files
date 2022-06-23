@@ -3,7 +3,7 @@
 
 huffman_code_t bit_reverse(huffman_code_t value, code_length_t length) {
 	assert(length <= 15);
-	if (value >= static_cast<huffman_code_t>(1 << length)) { throw std::runtime_error{ "" }; }
+	if (value >= static_cast<huffman_code_t>(1 << length)) { throw std::runtime_error{ "can\'t reverse bits if value >= 1 << length" }; }
 	static const std::vector<std::vector<huffman_code_t>> lookup_table{
 		[]() -> std::vector<std::vector<huffman_code_t>> {
 			std::vector<std::vector<huffman_code_t>> table(16);
@@ -69,13 +69,13 @@ huffman_code_t huffman_code_table::peek(const bitwise_readable_stream& current_b
 
 std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_t code) {
 	assert(code >= 257 && code <= 287);
-	if (code < 257 || code > 285) { throw std::runtime_error{ "" }; }
+	if (code < 257 || code > 285) { throw std::runtime_error{ "can\'t get length for code that is less than 257 or greater than 285" }; }
 	static const std::uint_fast8_t extra_bit_counts[]{ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0 };
 	static const std::uint_fast16_t lengths[]{ 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258 };
 	std::uint_fast16_t acc{ lengths[code - 257] };
 	std::uint_fast8_t extra_bit_count{ extra_bit_counts[code - 257] };
 	if (extra_bit_count) {
-		if (!compressed.can_advance(extra_bit_count)) { throw std::out_of_range{ "" }; }
+		if (!compressed.can_advance(extra_bit_count)) { throw std::out_of_range{ "can\'t read extra bits for length" }; }
 		acc += compressed.peek(extra_bit_count);
 		compressed.advance(extra_bit_count);
 	}
@@ -84,13 +84,13 @@ std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_
 
 std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_code_t code) {
 	assert(code >= 0 && code <= 31);
-	if (code > 29) { throw std::runtime_error{ "" }; }
+	if (code > 29) { throw std::runtime_error{ "can\'t get distance for code that is greater than 29" }; }
 	static const std::uint_fast8_t extra_bit_counts[]{ 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13 };
 	static const std::uint_fast16_t distances[]{ 1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577 };
 	std::uint_fast16_t acc{ distances[code] };
 	std::uint_fast8_t extra_bit_count{ extra_bit_counts[code] };
 	if (extra_bit_count) {
-		if (!compressed.can_advance(extra_bit_count)) { throw std::out_of_range{ "" }; }
+		if (!compressed.can_advance(extra_bit_count)) { throw std::out_of_range{ "can\'t read extra bits for distance" }; }
 		acc += compressed.peek(extra_bit_count);
 		compressed.advance(extra_bit_count);
 	}
@@ -99,12 +99,12 @@ std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_cod
 
 void handle_uncompressed_block(std::vector<std::uint8_t>& out, bitwise_readable_stream& compressed) {
 	compressed.advance_to_byte();
-	if (!compressed.can_advance(32)) { throw std::out_of_range{ "" }; }
+	if (!compressed.can_advance(32)) { throw std::out_of_range{ "can\'t read length and complement of length in uncompressed block" }; }
 	const std::uint8_t* position{ compressed.get_position() };
 	std::uint_fast16_t length{ static_cast<std::uint_fast16_t>(position[0] | position[1] << 8) }, complement_of_length{ static_cast<std::uint_fast16_t>(position[2] | position[3] << 8) };
-	if ((~length & 0xFFFF) != complement_of_length) { throw std::runtime_error{ "" }; }
+	if ((~length & 0xFFFF) != complement_of_length) { throw std::runtime_error{ "complement of length does not match calculated complement of length" }; }
 	compressed.advance(32);
-	if (!compressed.can_advance(length * 8)) { throw std::out_of_range{ "" }; }
+	if (!compressed.can_advance(length * 8)) { throw std::out_of_range{ "can\'t read bytes in uncompressed block" }; }
 	out.resize(out.size() + length);
 	std::memcpy(out.data() + out.size() - length, compressed.get_position(), length);
 	compressed.advance(length * 8);
@@ -117,14 +117,14 @@ void handle_code_length_code(std::vector<code_length_t>& out, huffman_code_t sym
 		return;
 	}
 	std::uint_fast8_t bit_counts[]{ 2, 3, 7 }, bit_count{ bit_counts[symbol - 16] };
-	if (!compressed.can_advance(bit_count)) { throw std::out_of_range{ "" }; }
+	if (!compressed.can_advance(bit_count)) { throw std::out_of_range{ "can\'t read extra bits for code length code" }; }
 	std::uint_fast8_t length{ static_cast<std::uint_fast8_t>(compressed.peek(bit_count)) };
 	compressed.advance(bit_count);
 	switch (symbol) {
 	case 16:
 		length += 3;
 		out.reserve(out.size() + length);
-		if (out.empty()) { throw std::runtime_error{ "" }; }
+		if (out.empty()) { throw std::runtime_error{ "can\'t copy last byte if there is no last byte" }; }
 		while (length--) { out.push_back(out.back()); }
 		return;
 	case 17:
@@ -147,7 +147,7 @@ void huffman_code_reader::set_table() {
 huffman_code_t huffman_code_reader::read(bitwise_readable_stream& compressed) const {
 	huffman_code_t code{ table.peek(compressed) };
 	code_length_t code_length{ code_lengths[code] };
-	if (!compressed.can_advance(code_length)) { throw std::out_of_range{ "" }; }
+	if (!compressed.can_advance(code_length)) { throw std::out_of_range{ "has read code but can\'t advance length of code bits" }; }
 	compressed.advance(code_length);
 	return code;
 }
@@ -175,19 +175,19 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 	std::uint_fast16_t is_last_block{ 0 }, block_type{ 0 };
 	// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.3
 	while (!is_last_block) {
-		if (!compressed.can_advance(3)) { throw std::out_of_range{ "" }; }
+		if (!compressed.can_advance(3)) { throw std::out_of_range{ "can\'t read deflate stream header" }; }
 		is_last_block = compressed.peek(3);
 		compressed.advance(3);
 		block_type = is_last_block & 0b110;
 		is_last_block &= 0b1;
-		if (block_type == 0b110) { throw std::runtime_error{ "" }; }
+		if (block_type == 0b110) { throw std::runtime_error{ "unknown deflate stream header" }; }
 		if (block_type == 0b000) {
 			handle_uncompressed_block(out, compressed);
 			continue;
 		}
 		const huffman_code_reader* huffman_codes_reader{ &fixed_huffman_codes_reader }, * distance_codes_reader{ &fixed_distance_codes_reader };
 		if (block_type == 0b100) {
-			if (!compressed.can_advance(14)) { throw std::out_of_range{ "" }; }
+			if (!compressed.can_advance(14)) { throw std::out_of_range{ "can\'t read first 14 bits of deflate stream block with type 10" }; }
 			std::uint_fast16_t literal_length_code_count{ compressed.peek(5) };
 			literal_length_code_count += 257;
 			compressed.advance(5);
@@ -200,7 +200,7 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 			huffman_code_reader code_length_code_reader; code_length_code_reader.code_lengths.resize(19);
 			static const std::uint_fast8_t symbol_index[]{ 16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15 };
 			for (std::uint_fast16_t code_length_code_index{ 0 }; code_length_code_index < code_length_code_count; ++code_length_code_index) {
-				if (!compressed.can_advance(3)) { throw std::out_of_range{ "" }; }
+				if (!compressed.can_advance(3)) { throw std::out_of_range{ "can\'t read code length for for code length code" }; }
 				std::uint_fast16_t code_length{ compressed.peek(3) };
 				compressed.advance(3);
 				code_length_code_reader.code_lengths[symbol_index[code_length_code_index]] = code_length;
@@ -210,7 +210,7 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 			std::vector<code_length_t> decompressed_code_lengths; decompressed_code_lengths.reserve(count);
 			while (1) {
 				handle_code_length_code(decompressed_code_lengths, code_length_code_reader.read(compressed), compressed);
-				if (decompressed_code_lengths.size() > count) { throw std::runtime_error{ "" }; }
+				if (decompressed_code_lengths.size() > count) { throw std::runtime_error{ "decompressed more code lengths than expected" }; }
 				if (decompressed_code_lengths.size() == count) { break; }
 			}
 			dynamic_huffman_codes_reader.code_lengths.clear();
@@ -233,8 +233,7 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 			} else {
 				std::uint_fast16_t length{ get_length(compressed, literal_length_code) };
 				std::uint_fast16_t distance{ get_distance(compressed, distance_codes_reader->read(compressed)) };
-				if (out.empty()) { throw std::runtime_error{ "" }; }
-				--distance;
+				if (distance-- > out.size()) { throw std::out_of_range{ "number of bytes after decompression is less than required" }; }
 				while (length--) { out.push_back(out.rbegin()[distance]); }
 			}
 		}
