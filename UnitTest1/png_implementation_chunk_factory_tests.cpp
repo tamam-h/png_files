@@ -201,7 +201,48 @@ namespace png_implementation_chunk_factory_tests {
 			std::uint8_t buffer[8], * position{ buffer };
 			bool should_fail{ 1 };
 			try {
-				write_4(0, position, { buffer, buffer + 2 });
+				write_8(0, position, { buffer, buffer + 2 });
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(read_1_tests) {
+	public:
+		TEST_METHOD(read_1_test_1) {
+			std::uint8_t buffer[]{ 1 };
+			const std::uint8_t* position{ buffer };
+			std::uint_fast64_t acc{ 1 };
+			Assert::IsTrue(read_1(position, { buffer, buffer + 1 }) == acc);
+			Assert::IsTrue(position == buffer + 1);
+		}
+		TEST_METHOD(read_1_test_2) {
+			std::uint8_t buffer[8];
+			const std::uint8_t* position{ buffer };
+			bool should_fail{ 1 };
+			try {
+				read_1(position, { buffer, buffer });
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(write_1_tests) {
+	public:
+		TEST_METHOD(write_1_test_1) {
+			std::uint8_t buffer[1], * position{ buffer };
+			write_1(0x34, position, { buffer, buffer + 1 });
+			--position;
+			const std::uint8_t* pos{ position };
+			Assert::IsTrue(read_1(pos, { buffer, buffer + 1 }) == 0x34);
+		}
+		TEST_METHOD(write_1_test_2) {
+			std::uint8_t buffer[1], * position{ buffer };
+			bool should_fail{ 1 };
+			try {
+				write_1(0, position, { buffer, buffer });
 			} catch (...) {
 				should_fail = 0;
 			}
