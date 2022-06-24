@@ -57,7 +57,7 @@ void clear_chunk_type_registry() {
 
 chunk_base::~chunk_base() {}
 
-unknown_chunk::unknown_chunk(std::span<const std::uint8_t> content, chunk_type_t chunk_type) : chunk_type{ chunk_type } {}
+unknown_chunk::unknown_chunk(chunk_type_t chunk_type) : chunk_type{ chunk_type } {}
 
 chunk_type_t unknown_chunk::get_type() const {
 	return chunk_type;
@@ -151,7 +151,7 @@ void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<cons
 		decltype(chunk_type_registry)::iterator it{ chunk_type_registry.find(chunk_type) };
 		if (it == chunk_type_registry.end()) {
 			if (is_critical_chunk_type(chunk_type)) { throw std::runtime_error{ "found critical chunk but chunk type is unknown" }; }
-			out.emplace_back(new unknown_chunk{ { position - chunk_size - 4, position - 4 }, chunk_type });
+			out.emplace_back(new unknown_chunk{ chunk_type });
 		} else {
 			out.emplace_back(it->second({ position - chunk_size - 4, position - 4 }, out));
 		}

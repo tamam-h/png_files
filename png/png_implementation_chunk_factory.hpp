@@ -58,7 +58,7 @@ void clear_chunk_type_registry();
 struct unknown_chunk : chunk_base {
 	chunk_type_t get_type() const override;
 	void set_image_data(image_construction_data& construction_data, image_data& out) override;
-	unknown_chunk(std::span<const std::uint8_t> content, chunk_type_t chunk_type);
+	unknown_chunk(chunk_type_t chunk_type);
 private:
 	const chunk_type_t chunk_type;
 };

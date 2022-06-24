@@ -49,17 +49,6 @@ struct IEND_chunk : chunk_base {
 // is automatically called at beginning of program
 void register_chunk_types();
 
-struct scanline_data {
-	// stores unfiltered/reconstructed data
-	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9
-	std::vector<std::vector<std::uint8_t>> scanlines;
-	std::vector<std::uint_fast8_t> reduced_image_number;
-	// reads in and produces scanlines
-	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
-	// writes bytes as type to out
-	void write_to(image_data& out);
-};
-
 // https://www.w3.org/TR/2003/REC-PNG-20031110/ section 11.2.2
 // colour_type << 5 | bit_depth
 enum struct pixel_type_hash {
@@ -78,4 +67,20 @@ enum struct pixel_type_hash {
 	greyscale_with_alpha_16 = 0b1001'0000,
 	truecolour_with_alpha_8 = 0b1100'1000,
 	truecolour_with_alpha_16 = 0b1101'0000
+};
+
+struct scanline_data {
+	// first index is reduced image number
+	// second index is scanline number
+	// scanlines[ ][ ][0] is filter method
+	std::vector<std::vector<std::vector<std::uint8_t>>> scanlines;
+	// reads in and produces scanlines
+	// construction_data should exist for the lifetime of scanline_data
+	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
+	// writes bytes as type to out
+	void write_to(image_data& out);
+	void reconstruct_data();
+	const image_construction_data& construction_data;
+	// bytes per pixel is a fixed point number ddddd.ddd where d is a bit
+	std::uint_fast8_t bytes_back, bytes_per_pixel;
 };
