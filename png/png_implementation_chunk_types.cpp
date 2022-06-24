@@ -81,7 +81,7 @@ void IHDR_chunk::set_image_data(image_construction_data& construction_data, imag
 		out.convert_to<greyscale_with_alpha_16>();
 		break;
 	default:
-		assert(0);
+		assert(0 && "unknown pixel type");
 	}
 }
 
@@ -94,7 +94,7 @@ PLTE_chunk::PLTE_chunk(std::vector<truecolour_8>&& palette) : palette{ palette }
 std::unique_ptr<chunk_base> construct_PLTE(std::span<const std::uint8_t> in, const std::vector<std::unique_ptr<chunk_base>>& chunks) {
 	bool IHDR_exists{ 0 };
 	for (const std::unique_ptr<chunk_base>& i : chunks) {
-		assert(i->get_type() != IEND_chunk::type);
+		assert(i->get_type() != IEND_chunk::type && "there should not be an IEND chunk in the vector of chunks");
 		if (i->get_type() == IHDR_chunk::type) { IHDR_exists = 1; }
 		if (i->get_type() == IDAT_chunk::type) { throw std::runtime_error{ "PLTE chunk type should come before IDAT chunks" }; }
 		if (i->get_type() == PLTE_chunk::type) { throw std::runtime_error{ "expected only one PLTE chunk type" }; }
@@ -168,7 +168,7 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 		bytes_back = 8;
 		break;
 	default:
-		assert(0);
+		assert(0 && "unknown pixel type");
 	}
 	if (construction_data.uses_interlacing) {
 		
@@ -178,8 +178,8 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 		std::uint_fast64_t width{ static_cast<std::uint_fast64_t>(construction_data.width) * bytes_per_pixel }, height{ static_cast<std::uint_fast64_t>(construction_data.height) };
 		// width is a fixed point numbers ddddddddd'ddddddddd'dddddddd'dddddddd where d is a bit
 		width = (width >> 3) + static_cast<bool>(width & 0b0000'0111) + 1;
-		assert(width > 1);
-		assert(height > 0);
+		assert(width > 1 && "scanlines should have a size of more than one");
+		assert(height > 0 && "there should be more than one scanline");
 		scanlines.back().resize(height, std::vector<std::uint8_t>(width));
 		const std::uint8_t* position{ in.data() };
 		assert_can_read(position + width * height - 1, in);
@@ -207,7 +207,7 @@ IDAT_chunk::IDAT_chunk(std::shared_ptr<std::vector<std::uint8_t>> ptr) : zlib_st
 std::unique_ptr<chunk_base> construct_IDAT(std::span<const std::uint8_t> in, const std::vector<std::unique_ptr<chunk_base>>& chunks) {
 	bool IHDR_exists{ 0 }, IDAT_exists{ 0 };
 	for (const std::unique_ptr<chunk_base>& i : chunks) {
-		assert(i->get_type() != IEND_chunk::type);
+		assert(i->get_type() != IEND_chunk::type && "there should not be an IEND chunk in the vector of chunks");
 		if (i->get_type() == IHDR_chunk::type) {
 			IHDR_exists = 1;
 		}

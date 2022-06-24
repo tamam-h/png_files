@@ -2,7 +2,7 @@
 #include "png_implementation_deflate_algorithm.hpp"
 
 huffman_code_t bit_reverse(huffman_code_t value, code_length_t length) {
-	assert(length <= 15);
+	assert(length <= 15 && "unimplemented for code lengths that are greater than 15");
 	if (value >= static_cast<huffman_code_t>(1 << length)) { throw std::runtime_error{ "can\'t reverse bits if value >= 1 << length" }; }
 	static const std::vector<std::vector<huffman_code_t>> lookup_table{
 		[]() -> std::vector<std::vector<huffman_code_t>> {
@@ -28,9 +28,9 @@ huffman_code_t bit_reverse(huffman_code_t value, code_length_t length) {
 huffman_code_table::huffman_code_table() : max_code_length{ 0 } {}
 
 huffman_code_table::huffman_code_table(std::span<const code_length_t> code_lengths) {
-	assert(code_lengths.size());
+	assert(code_lengths.size() && "the alphabet must have more than zero size");
 	max_code_length = *std::max_element(code_lengths.begin(), code_lengths.end());
-	assert(max_code_length <= 15);
+	assert(max_code_length <= 15 && "unimplemented for when a code length is bigger than 15 bits");
 	// https://www.rfc-editor.org/rfc/rfc1951.pdf section 3.2.2
 	std::vector<std::uint_fast16_t> code_length_counts;
 	code_length_counts.resize(max_code_length + 1);
@@ -63,12 +63,12 @@ huffman_code_table::huffman_code_table(std::span<const code_length_t> code_lengt
 }
 
 huffman_code_t huffman_code_table::peek(const bitwise_readable_stream& current_bitwise_readable_stream) const noexcept {
-	assert(max_code_length);
+	assert(max_code_length && "max code length in alphabet should be greater than zero");
 	return table[current_bitwise_readable_stream.zero_extended_peek(max_code_length)];
 }
 
 std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_t code) {
-	assert(code >= 257 && code <= 287);
+	assert(code >= 257 && code <= 287 && "no length is associated with a code less than 257 or greater than 287");
 	if (code < 257 || code > 285) { throw std::runtime_error{ "can\'t get length for code that is less than 257 or greater than 285" }; }
 	static const std::uint_fast8_t extra_bit_counts[]{ 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0 };
 	static const std::uint_fast16_t lengths[]{ 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258 };
@@ -83,7 +83,7 @@ std::uint_fast16_t get_length(bitwise_readable_stream& compressed, huffman_code_
 }
 
 std::uint_fast16_t get_distance(bitwise_readable_stream& compressed, huffman_code_t code) {
-	assert(code >= 0 && code <= 31);
+	assert(code >= 0 && code <= 31 && "no distance is associated with a code greater than 31");
 	if (code > 29) { throw std::runtime_error{ "can\'t get distance for code that is greater than 29" }; }
 	static const std::uint_fast8_t extra_bit_counts[]{ 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 12, 12, 13, 13 };
 	static const std::uint_fast16_t distances[]{ 1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577 };
@@ -111,7 +111,7 @@ void handle_uncompressed_block(std::vector<std::uint8_t>& out, bitwise_readable_
 }
 
 void handle_code_length_code(std::vector<code_length_t>& out, huffman_code_t symbol, bitwise_readable_stream& compressed) {
-	assert(symbol < 19);
+	assert(symbol < 19 && "value of code length codes should be less than 18");
 	if (symbol <= 15) {
 		out.push_back(static_cast<code_length_t>(symbol));
 		return;

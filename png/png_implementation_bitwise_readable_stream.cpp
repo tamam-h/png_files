@@ -38,8 +38,8 @@ struct bitwise_readable_stream::functions {
 };
 
 std::uint_fast16_t bitwise_readable_stream::peek(unsigned int bits) const noexcept {
-	assert(can_advance(bits));
-	assert(bits <= 16);
+	assert(can_advance(bits) && "can\'t peek bits if can\'t advance that number of bits");
+	assert(bits <= 16 && "not implemented for when trying to peek more than 16 bits");
 	const auto get_index{
 		[this](unsigned int index) -> std::uint8_t {
 			return begin[index];
@@ -49,14 +49,14 @@ std::uint_fast16_t bitwise_readable_stream::peek(unsigned int bits) const noexce
 }
 
 void bitwise_readable_stream::advance(unsigned int bits) noexcept {
-	assert(can_advance(bits));
+	assert(can_advance(bits) && "can\'t advance that number of bits");
 	bit_index += bits;
 	byte_index += bit_index >> 3;
 	bit_index &= 0b111;
 }
 
 std::uint_fast16_t bitwise_readable_stream::zero_extended_peek(unsigned int bits) const noexcept {
-	assert(bits <= 16);
+	assert(bits <= 16 && "not implemented for trying to zero_extended_peek more than 16 bits");
 	if (can_advance(bits)) { return peek(bits); }
 	const auto get_index{
 		[this](unsigned int index) -> std::uint8_t {
@@ -74,6 +74,6 @@ void bitwise_readable_stream::advance_to_byte() noexcept {
 }
 
 const std::uint8_t* bitwise_readable_stream::get_position() const noexcept {
-	assert(!bit_index);
+	assert(!bit_index && "can\'t return a pointer to a bit, position should be at a byte boundary");
 	return begin + byte_index;
 }

@@ -34,20 +34,20 @@ bool is_valid_chunk_type(chunk_type_t in) {
 }
 
 bool is_critical_chunk_type(chunk_type_t in) {
-	assert(is_valid_chunk_type(in));
+	assert(is_valid_chunk_type(in) && "chunk type should be valid to find out if chunk is critical");
 	return !(0b0010'0000'0000'0000'0000'0000'0000'0000 & in);
 }
 
 bool reserved_bit_set(chunk_type_t in) {
-	assert(is_valid_chunk_type(in));
+	assert(is_valid_chunk_type(in) && "chunk type should be valid to find out if reserved bit is set");
 	return 0b0000'0000'0000'0000'0010'0000'0000'0000 & in;
 }
 
 std::map<chunk_type_t, std::unique_ptr<chunk_base> (*)(std::span<const std::uint8_t> in, const std::vector<std::unique_ptr<chunk_base>>& chunks)> chunk_type_registry;
 
 void register_chunk_type(chunk_type_t type, std::unique_ptr<chunk_base>(*create_chunk)(std::span<const std::uint8_t> in, const std::vector<std::unique_ptr<chunk_base>>& chunks)) {
-	assert(is_valid_chunk_type(type));
-	assert(!reserved_bit_set(type));
+	assert(is_valid_chunk_type(type) && "chunk type should be valid to be registered");
+	assert(!reserved_bit_set(type) && "reserved bit shouldn\'t be set to register a chunk type");
 	chunk_type_registry[type] = create_chunk;
 }
 
@@ -66,14 +66,14 @@ chunk_type_t unknown_chunk::get_type() const {
 void unknown_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {}
 
 void assert_can_read(const std::uint8_t* position, const std::span<const std::uint8_t>& in) {
-	assert(position >= in.data());
+	assert(position >= in.data() && "position should be greater than or equal to start of input data");
 	if (position >= in.data() + in.size()) {
 		throw std::out_of_range{ "can\'t read from that position" };
 	}
 }
 
 std::uint_fast32_t read_4(const std::uint8_t*& position, const std::span<const std::uint8_t>& in) {
-	assert(position >= in.data());
+	assert(position >= in.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position + 3, in);
 	std::uint_fast32_t acc{ static_cast<std::uint_fast32_t>(position[0]) << 24
 		| static_cast<std::uint_fast32_t>(position[1]) << 16
@@ -84,13 +84,13 @@ std::uint_fast32_t read_4(const std::uint8_t*& position, const std::span<const s
 }
 
 std::uint_fast8_t read_1(const std::uint8_t*& position, const std::span<const std::uint8_t>& in) {
-	assert(position >= in.data());
+	assert(position >= in.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position, in);
 	return *position++;
 }
 
 void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data());
+	assert(position >= out.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position + 3, out);
 	position[0] = (value & 0xff00'0000) >> 24;
 	position[1] = (value & 0x00ff'0000) >> 16;
@@ -100,7 +100,7 @@ void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<
 }
 
 std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const std::uint8_t>& in) {
-	assert(position >= in.data());
+	assert(position >= in.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position + 7, in);
 	std::uint_fast64_t acc{ static_cast<std::uint_fast64_t>(position[0]) << 56
 		| static_cast<std::uint_fast64_t>(position[1]) << 48
@@ -115,7 +115,7 @@ std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const s
 }
 
 void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data());
+	assert(position >= out.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position + 7, out);
 	position[0] = static_cast<std::uint8_t>((value & 0xff00'0000'0000'0000) >> 56);
 	position[1] = static_cast<std::uint8_t>((value & 0x00ff'0000'0000'0000) >> 48);
@@ -129,7 +129,7 @@ void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<
 }
 
 void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data());
+	assert(position >= out.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position, out);
 	*position++ = value;
 }
