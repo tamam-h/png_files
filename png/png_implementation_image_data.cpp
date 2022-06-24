@@ -33,7 +33,7 @@ APPLY_TO_ALL_PIXEL_TYPES(SPECIALIZE_PIXEL_TYPE_NUMBER_V)
 template <pixel_type type> void image_data::convert_to() {
 	if (get_pixel_type() != pixel_type_number_v<type>) {
 		std::vector<std::vector<type>> converted;
-		std::visit( 
+		std::visit(
 			[&converted](auto&& data) -> void {
 			using first_held_type = typename std::decay_t<decltype(data)>::value_type;
 			using held_type = typename first_held_type::value_type;

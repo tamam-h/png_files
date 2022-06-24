@@ -48,3 +48,34 @@ struct IEND_chunk : chunk_base {
 // registers chunk types listed in this header file
 // is automatically called at beginning of program
 void register_chunk_types();
+
+struct scanline_data {
+	// stores unfiltered/reconstructed data
+	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9
+	std::vector<std::vector<std::uint8_t>> scanlines;
+	std::vector<std::uint_fast8_t> reduced_image_number;
+	// reads in and produces scanlines
+	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
+	// writes bytes as type to out
+	void write_to(image_data& out);
+};
+
+// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 11.2.2
+// colour_type << 5 | bit_depth
+enum struct pixel_type_hash {
+	greyscale_1 = 0b0000'0001,
+	greyscale_2 = 0b0000'0010,
+	greyscale_4 = 0b0000'0100,
+	greyscale_8 = 0b0000'1000,
+	greyscale_16 = 0b0001'0000,
+	truecolour_8 = 0b0100'1000,
+	truecolour_16 = 0b0101'0000,
+	indexed_colour_1 = 0b0110'0001,
+	indexed_colour_2 = 0b0110'0010,
+	indexed_colour_4 = 0b0110'0100,
+	indexed_colour_8 = 0b0110'1000,
+	greyscale_with_alpha_8 = 0b1000'1000,
+	greyscale_with_alpha_16 = 0b1001'0000,
+	truecolour_with_alpha_8 = 0b1100'1000,
+	truecolour_with_alpha_16 = 0b1101'0000
+};

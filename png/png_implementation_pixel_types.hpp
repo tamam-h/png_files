@@ -1,7 +1,6 @@
 #pragma once
 #include <cstdint>
 
-// order is important
 enum struct pixel_type_number {
 	greyscale_1,
 	greyscale_2,

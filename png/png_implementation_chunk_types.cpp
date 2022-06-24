@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "png_implementation_deflate_algorithm.hpp"
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
 #include "png_implementation_image_data.hpp"
@@ -22,10 +23,66 @@ std::unique_ptr<chunk_base> construct_IHDR(std::span<const std::uint8_t> in, con
 	if (compression_method != 0) { throw std::runtime_error{ "compression method should be zero" }; }
 	if (filter_method != 0) { throw std::runtime_error{ "filter method should be zero" }; }
 	if (interlace_method > 1) { throw std::runtime_error{ "interlace method should be either zero or one" }; }
-	static const std::set<std::pair<std::uint_fast8_t, std::uint_fast8_t>> allowed_colour_type_bit_depth_pairs{
-		{ 0, 1 }, { 0, 2 }, { 0, 4 }, { 0, 8 }, { 0, 16 }, { 2, 8 }, { 2, 16 }, { 3, 1 }, { 3, 2 }, { 3, 4 }, { 3, 8 }, { 4, 8 }, { 4, 16 }, { 6, 8 }, { 6, 16 } };
-	if (!allowed_colour_type_bit_depth_pairs.contains({ colour_type, bit_depth })) { throw std::runtime_error{ "invalid pair of colour type and bit depth" }; }
+	if (colour_type > 6) { throw std::runtime_error{ "colour type is greater than expected" }; }
+	if (bit_depth > 16) { throw std::runtime_error{ "bit depth is greater than expected" }; }
+	static const std::set<pixel_type_hash> allowed_colour_type_bit_depth_pairs{ pixel_type_hash::greyscale_1, pixel_type_hash::greyscale_2, pixel_type_hash::greyscale_4, pixel_type_hash::greyscale_8, pixel_type_hash::greyscale_16,
+		pixel_type_hash::truecolour_8, pixel_type_hash::truecolour_16, pixel_type_hash::indexed_colour_1, pixel_type_hash::indexed_colour_2, pixel_type_hash::indexed_colour_4, pixel_type_hash::indexed_colour_8,
+		pixel_type_hash::greyscale_with_alpha_8, pixel_type_hash::greyscale_with_alpha_16, pixel_type_hash::truecolour_with_alpha_8, pixel_type_hash::truecolour_with_alpha_16 };
+	if (!allowed_colour_type_bit_depth_pairs.contains(static_cast<pixel_type_hash>(colour_type << 5 | bit_depth))) {
+		throw std::runtime_error{ "invalid pair of colour type and bit depth" };
+	}
 	return std::unique_ptr<chunk_base>{ new IHDR_chunk{ width, height, bit_depth, colour_type, compression_method, filter_method, interlace_method } };
+}
+
+void IHDR_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {
+	construction_data.width = width;
+	construction_data.height = height;
+	construction_data.bit_depth = bit_depth;
+	construction_data.colour_type = colour_type;
+	construction_data.uses_interlacing = interlace_method;
+	switch (colour_type << 5 | bit_depth) {
+	case static_cast<int>(pixel_type_hash::greyscale_1):
+		out.convert_to<greyscale_1>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_2):
+		out.convert_to<greyscale_2>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_4):
+		out.convert_to<greyscale_4>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_8):
+		out.convert_to<greyscale_8>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_16):
+		out.convert_to<greyscale_16>();
+		break;
+	case static_cast<int>(pixel_type_hash::truecolour_8):
+		out.convert_to<truecolour_8>();
+		break;
+	case static_cast<int>(pixel_type_hash::truecolour_16):
+		out.convert_to<truecolour_16>();
+		break;
+	case static_cast<int>(pixel_type_hash::indexed_colour_1):
+	case static_cast<int>(pixel_type_hash::indexed_colour_2):
+	case static_cast<int>(pixel_type_hash::indexed_colour_4):
+	case static_cast<int>(pixel_type_hash::indexed_colour_8):
+		out.convert_to<truecolour_8>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_with_alpha_8):
+		out.convert_to<greyscale_with_alpha_8>();
+		break;
+	case static_cast<int>(pixel_type_hash::greyscale_with_alpha_16):
+		out.convert_to<greyscale_with_alpha_16>();
+		break;
+	case static_cast<int>(pixel_type_hash::truecolour_with_alpha_8):
+		out.convert_to<greyscale_with_alpha_8>();
+		break;
+	case static_cast<int>(pixel_type_hash::truecolour_with_alpha_16):
+		out.convert_to<greyscale_with_alpha_16>();
+		break;
+	default:
+		assert(0);
+	}
 }
 
 chunk_type_t PLTE_chunk::get_type() const {
@@ -45,16 +102,24 @@ std::unique_ptr<chunk_base> construct_PLTE(std::span<const std::uint8_t> in, con
 	if (!IHDR_exists) { throw std::runtime_error{ "IHDR chunk should come before PLTE chunk" }; }
 	if (in.size() % 3 || in.size() > 768 // 256 * 3 see https://www.w3.org/TR/2003/REC-PNG-20031110/ section 11.2.3
 		) { throw std::runtime_error{ "PLTE chunk type should have a size that is a multiple of 3 and size should be less than or equal to 768" }; }
-	std::size_t chunk_size{ in.size() };
 	const std::uint8_t* position{ in.data() };
 	std::vector<truecolour_8> palette; palette.reserve(in.size() / 3);
-	while (chunk_size -= 3) {
+	for (std::size_t i{ 0 }; i < in.size(); i += 3) {
 		palette.emplace_back();
 		palette.back().red = *position++;
 		palette.back().green = *position++;
 		palette.back().blue = *position++;
 	}
 	return std::unique_ptr<chunk_base>{ new PLTE_chunk{ std::move(palette) } };
+}
+
+void PLTE_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {
+	if (construction_data.colour_type != 3) {
+		if (palette.size()) { throw std::runtime_error{ "palette should have a size of zero if the colour type is not 3" }; }
+		return;
+	}
+	if (palette.size() > 1ull << construction_data.bit_depth) { throw std::runtime_error{ "palette size is greater than expected" }; }
+	construction_data.palette = std::move(palette);
 }
 
 chunk_type_t IDAT_chunk::get_type() const {
@@ -82,6 +147,14 @@ std::unique_ptr<chunk_base> construct_IDAT(std::span<const std::uint8_t> in, con
 	return std::unique_ptr<chunk_base>{ new IDAT_chunk{ vector } };
 }
 
+void IDAT_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {
+	std::vector<std::uint8_t> decompressed;
+	bitwise_readable_stream stream{ { zlib_stream->data(), zlib_stream->data() + zlib_stream->size() } };
+	decompress(decompressed, stream);
+	scanline_data scanlines{ construction_data, { decompressed.data(), decompressed.data() + decompressed.size() } };
+	scanlines.write_to(out);
+}
+
 chunk_type_t IEND_chunk::get_type() const {
 	return type;
 }
@@ -95,6 +168,8 @@ std::unique_ptr<chunk_base> construct_IEND(std::span<const std::uint8_t> in, con
 	if (!IDAT_exists) { throw std::runtime_error{ "IDAT chunk type should come before IEND chunk type" }; }
 	return std::unique_ptr<chunk_base>{ new IEND_chunk };
 }
+
+void IEND_chunk::set_image_data(image_construction_data& construction_data, image_data& out) {}
 
 void register_chunk_types() {
 	register_chunk_type(IHDR_chunk::type, construct_IHDR);

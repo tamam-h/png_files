@@ -8,8 +8,12 @@
 using chunk_type_t = std::uint_fast32_t;
 
 // data used by chunk_base::set_image_data
+// used when reading an image from a string
 struct image_construction_data {
-
+	std::uint_fast32_t width, height;
+	std::uint_fast8_t bit_depth, colour_type;
+	bool uses_interlacing;
+	std::vector<truecolour_8> palette;
 };
 
 struct chunk_base {
