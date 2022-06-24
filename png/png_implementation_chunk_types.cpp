@@ -205,16 +205,19 @@ chunk_type_t IDAT_chunk::get_type() const {
 IDAT_chunk::IDAT_chunk(std::shared_ptr<std::vector<std::uint8_t>> ptr) : zlib_stream{ ptr } {}
 
 std::unique_ptr<chunk_base> construct_IDAT(std::span<const std::uint8_t> in, const std::vector<std::unique_ptr<chunk_base>>& chunks) {
-	bool IHDR_exists{ 0 };
+	bool IHDR_exists{ 0 }, IDAT_exists{ 0 };
 	for (const std::unique_ptr<chunk_base>& i : chunks) {
 		assert(i->get_type() != IEND_chunk::type);
 		if (i->get_type() == IHDR_chunk::type) {
 			IHDR_exists = 1;
-			break;
+		}
+		if (i->get_type() == IDAT_chunk::type) {
+			IDAT_exists = 1;
 		}
 	}
 	if (!IHDR_exists) { throw std::runtime_error{ "IDAT chunk type should come after IHDR chunk type" }; }
-	std::shared_ptr<std::vector<std::uint8_t>> vector{ chunks.back()->get_type() == IDAT_chunk::type ? static_cast<IDAT_chunk*>(chunks.back().get())->zlib_stream
+	if (IDAT_exists && chunks.back()->get_type() != IDAT_chunk::type) { throw std::runtime_error{ "IDAT chunks must be adjacent" }; }
+	std::shared_ptr<std::vector<std::uint8_t>> vector{ IDAT_exists ? static_cast<IDAT_chunk*>(chunks.back().get())->zlib_stream
 		: std::shared_ptr<std::vector<std::uint8_t>>{ new std::vector<std::uint8_t> } };
 	vector->reserve(vector->size() + in.size());
 	std::uint8_t* destination{ vector->data() + vector->size() };

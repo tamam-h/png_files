@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
+#include "png_implementation_zlib_stream.hpp"
 #include <CppUnitTest.h>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -220,6 +221,82 @@ namespace chunk_types_tests {
 			bool should_fail{ 1 };
 			try {
 				construct_PLTE(span, vector);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(construct_IDAT_tests) {
+	public:
+		TEST_METHOD(construct_IDAT_test_1) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			zlib_stream_handler curr; curr.uncompressed_data.resize(363);
+			curr.compress();
+			std::vector<std::uint8_t> data{ curr.compressed_data };
+			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
+			construct_IDAT(span, vector);
+		}
+		TEST_METHOD(construct_IDAT_test_2) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ PLTE_chunk::type } });
+			zlib_stream_handler curr; curr.uncompressed_data.resize(363);
+			curr.compress();
+			std::vector<std::uint8_t> data{ curr.compressed_data };
+			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() - 1 };
+			vector.push_back(construct_IDAT(span, vector));
+			construct_IDAT({ data.data() + data.size() - 1, data.data() + data.size() }, vector);
+		}
+		TEST_METHOD(construct_IDAT_test_3) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ PLTE_chunk::type } });
+			zlib_stream_handler curr; curr.uncompressed_data.resize(363);
+			curr.compress();
+			std::vector<std::uint8_t> data{ curr.compressed_data };
+			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() - 1 };
+			vector.push_back(construct_IDAT(span, vector));
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			bool should_fail{ 1 };
+			try {
+				construct_IDAT({ data.data() + data.size() - 1, data.data() + data.size() }, vector);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+	};
+	TEST_CLASS(construct_IEND_tests) {
+	public:
+		TEST_METHOD(construct_IEND_test_1) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IDAT_chunk::type } });
+			std::vector<std::uint8_t> data(1);
+			construct_IEND({ data.data(), data.data() }, vector);
+		}
+		TEST_METHOD(construct_IEND_test_2) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IDAT_chunk::type } });
+			std::vector<std::uint8_t> data(1);
+			bool should_fail{ 1 };
+			try {
+				construct_IEND({ data.data(), data.data() + 1 }, vector);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(construct_IEND_test_3) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			std::vector<std::uint8_t> data(1);
+			bool should_fail{ 1 };
+			try {
+				construct_IEND({ data.data(), data.data() }, vector);
 			} catch (...) {
 				should_fail = 0;
 			}
