@@ -122,6 +122,63 @@ void PLTE_chunk::set_image_data(image_construction_data& construction_data, imag
 	construction_data.palette = std::move(palette);
 }
 
+dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, dimension_struct in) {
+	assert(in.width >= 1 && in.height >= 1 && "image size must be valid");
+	assert(reduced_image_number < 7 && "there are only 7 reduced images");
+	struct small_dimension_struct {
+		std::int_fast8_t width, height;
+	};
+	static const std::vector<std::vector<std::vector<small_dimension_struct>>> dimensions{
+		[]() -> std::vector<std::vector<std::vector<small_dimension_struct>>> {
+			std::vector<std::vector<std::vector<small_dimension_struct>>> dimensions(7, std::vector<std::vector<small_dimension_struct>>(8, std::vector<small_dimension_struct>(8)));
+			std::uint_fast8_t arr[8][8]{
+				{ 1, 6, 4, 6, 2, 6, 4, 6 },
+				{ 7, 7, 7, 7, 7, 7, 7, 7 },
+				{ 5, 6, 5, 6, 5, 6, 5, 6 },
+				{ 7, 7, 7, 7, 7, 7, 7, 7 },
+				{ 3, 6, 4, 6, 3, 6, 4, 6 },
+				{ 7, 7, 7, 7, 7, 7, 7, 7 },
+				{ 5, 6, 5, 6, 5, 6, 5, 6 },
+				{ 7, 7, 7, 7, 7, 7, 7, 7 }
+			};
+			for (std::uint_fast8_t reduced_image_number{ 1 }; reduced_image_number <= 7; ++reduced_image_number) {
+				for (std::uint_fast8_t max_i{ 0 }; max_i < 8; ++max_i) {
+					for (std::uint_fast8_t max_j{ 0 }; max_j < 8; ++max_j) {
+						small_dimension_struct temp{ -1, -1 }, acc{ 0, 0 };
+						for (std::uint_fast8_t i{ 0 }; i <= max_i; ++i) {
+							for (std::uint_fast8_t j{ 0 }; j <= max_j; ++j) {
+								if (arr[i][j] == reduced_image_number && j > temp.width) {
+									temp.width = j;
+									++acc.width;
+								}
+								if (arr[i][j] == reduced_image_number && i > temp.height) {
+									temp.height = i;
+									++acc.height;
+								}
+							}
+						}
+						dimensions[reduced_image_number - 1][max_i][max_j] = acc;
+					}
+				}
+			}
+			return dimensions;
+		} ()
+	};
+	dimension_struct first_dimension{ (in.width - 1 >> 3) * dimensions[reduced_image_number][7][7].width, (in.height - 1 >> 3) * dimensions[reduced_image_number][7][7].height };
+	small_dimension_struct second_dimension{ dimensions[reduced_image_number][(in.height - 1) & 0b111][(in.width - 1) & 0b111] };
+	if (in.height > 8) {
+		second_dimension.width = dimensions[reduced_image_number][7][(in.width - 1) & 0b111].width;
+	}
+	if (in.width > 8) {
+		second_dimension.height = dimensions[reduced_image_number][(in.height - 1) & 0b111][7].height;
+	}
+	dimension_struct return_value{ first_dimension.width + second_dimension.width, first_dimension.height + second_dimension.height };
+	if (return_value.width == 0 || return_value.height == 0) {
+		return { 0, 0 };
+	}
+	return return_value;
+}
+
 scanline_data::scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in) : construction_data{ construction_data }, bytes_back{}, bytes_per_pixel{} {
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 7.2 and 9.2
 	switch (construction_data.colour_type << 5 | construction_data.bit_depth) {
@@ -172,13 +229,14 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 	}
 	if (construction_data.uses_interlacing) {
 		
+
 	} else {
 		scanlines.emplace_back();
 		// width is a fixed point number ddddddddd'ddddddddd'dddddddd'ddddd.ddd where d is a bit
-		std::uint_fast64_t width{ static_cast<std::uint_fast64_t>(construction_data.width) * bytes_per_pixel }, height{ static_cast<std::uint_fast64_t>(construction_data.height) };
+		std::uint_fast64_t width{ static_cast<std::uint_fast64_t>(construction_data.width) * bytes_per_pixel }, height{ construction_data.height };
 		// width is a fixed point numbers ddddddddd'ddddddddd'dddddddd'dddddddd where d is a bit
 		width = (width >> 3) + static_cast<bool>(width & 0b0000'0111) + 1;
-		assert(width > 1 && "scanlines should have a size of more than one");
+		assert(width > 1 && "scanlines with filter type should have a size of more than one");
 		assert(height > 0 && "there should be more than one scanline");
 		scanlines.back().resize(height, std::vector<std::uint8_t>(width));
 		const std::uint8_t* position{ in.data() };

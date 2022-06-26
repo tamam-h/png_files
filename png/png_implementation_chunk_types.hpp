@@ -84,3 +84,12 @@ struct scanline_data {
 	// bytes per pixel is a fixed point number ddddd.ddd where d is a bit
 	std::uint_fast8_t bytes_back, bytes_per_pixel;
 };
+
+struct dimension_struct {
+	std::uint_fast32_t width, height;
+};
+
+// in.width is assumed to be greater than 0
+// in.height is assumed to be greater than 0
+// reduced_image_number is assumed to be less than 7
+dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, dimension_struct in);
