@@ -234,3 +234,66 @@ INSTANTIATE_PIXEL_CAST_2(greyscale_with_alpha_float)
 INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_8)
 INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_16)
 INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_float)
+
+template <> greyscale_1 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1 << 1) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_1{}.grey)>(in) };
+}
+template <> greyscale_2 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1 << 2) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_2{}.grey)>(in) };
+}
+template <> greyscale_4 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1 << 4) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_4{}.grey)>(in) };
+}
+template <> greyscale_8 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1 << 8) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_8{}.grey)>(in) };
+}
+template <> greyscale_16 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1ull << 16) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_16{}.grey)>(in) };
+}
+template <> truecolour_8 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	if (uses_palette) {
+		if (in >= palette.size()) { throw std::out_of_range{ "can\'t access palette entry if that palette entry doesn\'t exist" }; }
+		return palette[in];
+	}
+	assert(in < (1ull << 24) && "in is greater than expected");
+	return { static_cast<decltype(truecolour_8{}.red)>((in & (((1ull << 8) - 1) << 16)) >> 16), static_cast<decltype(truecolour_8{}.green)>((in & (((1 << 8) - 1) << 8)) >> 8),
+		static_cast<decltype(truecolour_8{}.blue)>(in & ((1 << 8) - 1)) };
+}
+template <> truecolour_16 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1ull << 48) && "in is greater than expected");
+	return { static_cast<decltype(truecolour_16{}.red)>((in & (((1ull << 16) - 1) << 32)) >> 32), static_cast<decltype(truecolour_16{}.green)>((in & (((1ull << 16) - 1) << 16)) >> 16),
+		static_cast<decltype(truecolour_16{}.blue)>(in & ((1ull << 16) - 1)) };
+}
+template <> greyscale_with_alpha_8 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1ull << 16) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_with_alpha_8{}.grey)>((in & (((1 << 8) - 1) << 8)) >> 8), static_cast<decltype(greyscale_with_alpha_8{}.alpha)>(in & ((1 << 8) - 1)) };
+}
+template <> greyscale_with_alpha_16 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1ull << 32) && "in is greater than expected");
+	return { static_cast<decltype(greyscale_with_alpha_16{}.grey)>((in & (((1ull << 16) - 1) << 16)) >> 16), static_cast<decltype(greyscale_with_alpha_16{}.alpha)>(in & ((1ull << 16) - 1)) };
+}
+template <> truecolour_with_alpha_8 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	assert(in < (1ull << 32) && "in is greater than expected");
+	return { static_cast<decltype(truecolour_with_alpha_8{}.red)>((in & (((1ull << 8) - 1) << 24)) >> 24), static_cast<decltype(truecolour_with_alpha_8{}.green)>((in & (((1ull << 8) - 1) << 16)) >> 16),
+		static_cast<decltype(truecolour_with_alpha_8{}.blue)>((in & (((1 << 8) - 1) << 8)) >> 8), static_cast<decltype(truecolour_with_alpha_8{}.alpha)>(in & ((1 << 8) - 1)) };
+}
+template <> truecolour_with_alpha_16 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
+	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");
+	if constexpr (sizeof(std::uint_fast64_t) > 8) { assert(in <= UINT64_MAX && "in is greater than expected"); }
+	return { static_cast<decltype(truecolour_with_alpha_16{}.red)>((in & (((1ull << 16) - 1) << 48)) >> 48), static_cast<decltype(truecolour_with_alpha_16{}.green)>((in & (((1ull << 16) - 1) << 32)) >> 32),
+		static_cast<decltype(truecolour_with_alpha_16{}.blue)>((in & (((1ull << 16) - 1) << 16)) >> 16), static_cast<decltype(truecolour_with_alpha_16{}.alpha)>(in & ((1ull << 16) - 1)) };
+}

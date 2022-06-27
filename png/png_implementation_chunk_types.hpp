@@ -99,7 +99,7 @@ dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, d
 // gets a pixel from reduced image
 // first byte in each scanline is filter type
 // reduced_image[ ] returns a scanline
-// is a fixed point number ddddd.ddd where d is a bit
+// bytes per pixel is a fixed point number ddddd.ddd where d is a bit
 // i is first index
 // j is second index
 // least significant byte is last byte read from scanline in reduced image

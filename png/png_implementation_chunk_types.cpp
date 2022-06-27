@@ -122,6 +122,18 @@ void PLTE_chunk::set_image_data(image_construction_data& construction_data, imag
 	construction_data.palette = std::move(palette);
 }
 
+// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 8.2
+constexpr std::uint_fast8_t reduced_image_number_interlaced[8][8]{
+	{ 1, 6, 4, 6, 2, 6, 4, 6 },
+	{ 7, 7, 7, 7, 7, 7, 7, 7 },
+	{ 5, 6, 5, 6, 5, 6, 5, 6 },
+	{ 7, 7, 7, 7, 7, 7, 7, 7 },
+	{ 3, 6, 4, 6, 3, 6, 4, 6 },
+	{ 7, 7, 7, 7, 7, 7, 7, 7 },
+	{ 5, 6, 5, 6, 5, 6, 5, 6 },
+	{ 7, 7, 7, 7, 7, 7, 7, 7 }
+};
+
 dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, dimension_struct in) {
 	assert(in.width >= 1 && in.height >= 1 && "image size must be valid");
 	assert(reduced_image_number < 7 && "there are only 7 reduced images");
@@ -131,27 +143,17 @@ dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, d
 	static const std::vector<std::vector<std::vector<small_dimension_struct>>> dimensions{
 		[]() -> std::vector<std::vector<std::vector<small_dimension_struct>>> {
 			std::vector<std::vector<std::vector<small_dimension_struct>>> dimensions(7, std::vector<std::vector<small_dimension_struct>>(8, std::vector<small_dimension_struct>(8)));
-			std::uint_fast8_t arr[8][8]{
-				{ 1, 6, 4, 6, 2, 6, 4, 6 },
-				{ 7, 7, 7, 7, 7, 7, 7, 7 },
-				{ 5, 6, 5, 6, 5, 6, 5, 6 },
-				{ 7, 7, 7, 7, 7, 7, 7, 7 },
-				{ 3, 6, 4, 6, 3, 6, 4, 6 },
-				{ 7, 7, 7, 7, 7, 7, 7, 7 },
-				{ 5, 6, 5, 6, 5, 6, 5, 6 },
-				{ 7, 7, 7, 7, 7, 7, 7, 7 }
-			};
 			for (std::uint_fast8_t reduced_image_number{ 1 }; reduced_image_number <= 7; ++reduced_image_number) {
 				for (std::uint_fast8_t max_i{ 0 }; max_i < 8; ++max_i) {
 					for (std::uint_fast8_t max_j{ 0 }; max_j < 8; ++max_j) {
 						small_dimension_struct temp{ -1, -1 }, acc{ 0, 0 };
 						for (std::uint_fast8_t i{ 0 }; i <= max_i; ++i) {
 							for (std::uint_fast8_t j{ 0 }; j <= max_j; ++j) {
-								if (arr[i][j] == reduced_image_number && j > temp.width) {
+								if (reduced_image_number_interlaced[i][j] == reduced_image_number && j > temp.width) {
 									temp.width = j;
 									++acc.width;
 								}
-								if (arr[i][j] == reduced_image_number && i > temp.height) {
+								if (reduced_image_number_interlaced[i][j] == reduced_image_number && i > temp.height) {
 									temp.height = i;
 									++acc.height;
 								}
@@ -286,6 +288,7 @@ std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduc
 }
 
 void scanline_data::write_to(image_data& out) {
+
 }
 
 void scanline_data::reconstruct_data() {
@@ -324,9 +327,9 @@ void scanline_data::reconstruct_data() {
 		}
 	};
 	for (std::vector<std::vector<std::uint8_t>>& reduced_image : scanlines) {
-		for (std::int_fast64_t i{ 0 }; i < reduced_image.size(); ++i) {
+		for (std::int_fast64_t i{ 0 }; static_cast<std::size_t>(i) < reduced_image.size(); ++i) {
 			assert(reduced_image[i].size() > 1 && "scanlines should have a size of two or more: filter type and pixel data");
-			for (std::int_fast64_t j{ 1 }; j < reduced_image[i].size(); ++j) {
+			for (std::int_fast64_t j{ 1 }; static_cast<std::size_t>(j) < reduced_image[i].size(); ++j) {
 				std::uint_fast8_t a{ access(i, j - bytes_back, reduced_image) }, b{ access(i - 1, j, reduced_image) };
 				switch (reduced_image[i][0]) {
 				case 0:

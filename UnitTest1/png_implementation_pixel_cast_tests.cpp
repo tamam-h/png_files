@@ -85,4 +85,76 @@ namespace pixel_cast_tests {
 			Assert::IsTrue(static_cast<std::uint8_t>(255) == casted.alpha);
 		}
 	};
+	TEST_CLASS(to_pixel_tests) {
+	public:
+		TEST_METHOD(to_pixel_test_1) {
+			Assert::IsTrue(to_pixel<greyscale_1>(0, {}, 0).grey == 0);
+		}
+		TEST_METHOD(to_pixel_test_2) {
+			Assert::IsTrue(to_pixel<greyscale_1>(1, {}, 0).grey == 1);
+		}
+		TEST_METHOD(to_pixel_test_3) {
+			Assert::IsTrue(to_pixel<greyscale_2>(0, {}, 0).grey == 0);
+		}
+		TEST_METHOD(to_pixel_test_4) {
+			Assert::IsTrue(to_pixel<greyscale_2>(3, {}, 0).grey == 3);
+		}
+		TEST_METHOD(to_pixel_test_5) {
+			Assert::IsTrue(to_pixel<greyscale_8>(0b1101'0011, {}, 0).grey == 0b1101'0011);
+		}
+		TEST_METHOD(to_pixel_test_6) {
+			Assert::IsTrue(to_pixel<greyscale_16>(0b1101'0011'1111'0001, {}, 0).grey == 0b1101'0011'1111'0001);
+		}
+		TEST_METHOD(to_pixel_test_7) {
+			truecolour_8 returned{ to_pixel<truecolour_8>(0b1100'0001'1101'0011'1111'0001, {}, 0) };
+			Assert::IsTrue(returned.red == 0b1100'0001);
+			Assert::IsTrue(returned.green == 0b1101'0011);
+			Assert::IsTrue(returned.blue == 0b1111'0001);
+		}
+		TEST_METHOD(to_pixel_test_8) {
+			truecolour_16 returned{ to_pixel<truecolour_16>(0b1100'0001'1101'0011'1111'0001'1100'0001'1101'0011'1111'0001, {}, 0) };
+			Assert::IsTrue(returned.red == 0b1100'0001'1101'0011);
+			Assert::IsTrue(returned.green == 0b1111'0001'1100'0001);
+			Assert::IsTrue(returned.blue == 0b1101'0011'1111'0001);
+		}
+		TEST_METHOD(to_pixel_test_9) {
+			truecolour_8 returned{ to_pixel<truecolour_8>(2, { {}, {}, { 78, 96, 22 }, {} }, 1) };
+			Assert::IsTrue(returned.red == 78);
+			Assert::IsTrue(returned.green == 96);
+			Assert::IsTrue(returned.blue = 22);
+		}
+		TEST_METHOD(to_pixel_test_10) {
+			bool should_fail{ 1 };
+			try {
+				to_pixel<truecolour_8>(4, { {}, {}, {}, {} }, 1);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail);
+		}
+		TEST_METHOD(to_pixel_test_11) {
+			truecolour_with_alpha_8 returned{ to_pixel<truecolour_with_alpha_8>(0b1100'0001'1101'0011'1111'0001'0011'1100, {}, 0) };
+			Assert::IsTrue(returned.red == 0b1100'0001);
+			Assert::IsTrue(returned.green == 0b1101'0011);
+			Assert::IsTrue(returned.blue == 0b1111'0001);
+			Assert::IsTrue(returned.alpha == 0b0011'1100);
+		}
+		TEST_METHOD(to_pixel_test_12) {
+			truecolour_with_alpha_16 returned{ to_pixel<truecolour_with_alpha_16>(0b1100'0001'1101'0011'1111'0001'0011'1100'1100'0001'1101'0000'1111'0001'1111'1100, {}, 0) };
+			Assert::IsTrue(returned.red == 0b1100'0001'1101'0011);
+			Assert::IsTrue(returned.green == 0b1111'0001'0011'1100);
+			Assert::IsTrue(returned.blue == 0b1100'0001'1101'0000);
+			Assert::IsTrue(returned.alpha == 0b1111'0001'1111'1100);
+		}
+		TEST_METHOD(to_pixel_test_13) {
+			greyscale_with_alpha_8 returned{ to_pixel<greyscale_with_alpha_8>(0b1110'1001'0001'0011, {}, 0) };
+			Assert::IsTrue(returned.grey == 0b1110'1001);
+			Assert::IsTrue(returned.alpha == 0b0001'0011);
+		}
+		TEST_METHOD(to_pixel_test_14) {
+			greyscale_with_alpha_16 returned{ to_pixel<greyscale_with_alpha_16>(0b1110'1001'0001'0011'1110'1001'0001'0011, {}, 0) };
+			Assert::IsTrue(returned.grey == 0b1110'1001'0001'0011);
+			Assert::IsTrue(returned.alpha == 0b1110'1001'0001'0011);
+		}
+	};
 }
