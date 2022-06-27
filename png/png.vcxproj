@@ -144,7 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="png.h" />
+    <ClInclude Include="png.hpp" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="png_implementation_bitwise_readable_stream.hpp" />
     <ClInclude Include="png_implementation_chunk_factory.hpp" />

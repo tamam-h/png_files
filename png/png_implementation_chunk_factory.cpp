@@ -158,3 +158,10 @@ void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<cons
 		if (chunk_type == end_chunk_type) { break; }
 	}
 }
+
+void set_image_data(image_data& out, std::vector<std::unique_ptr<chunk_base>>& in) {
+	image_construction_data construction_data;
+	for (std::unique_ptr<chunk_base>& i : in) {
+		i->set_image_data(construction_data, out);
+	}
+}

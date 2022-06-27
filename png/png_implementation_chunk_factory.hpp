@@ -117,3 +117,8 @@ constexpr chunk_type_t end_chunk_type{ 0x4945'4e44 };
 // terminates when end_chunk_type found
 // throws if end_chunk_type not found
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in);
+
+// reads information from in,
+// writes information to out
+// throw if there is a problem
+void set_image_data(image_data& out, std::vector<std::unique_ptr<chunk_base>>& in);

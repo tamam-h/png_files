@@ -203,30 +203,30 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 		}
 	};
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 7.2 and 9.2
-	switch (construction_data.colour_type << 5 | construction_data.bit_depth) {
-	case static_cast<int>(pixel_type_hash::greyscale_1):
-	case static_cast<int>(pixel_type_hash::indexed_colour_1):
+	switch (static_cast<pixel_type_hash>(construction_data.colour_type << 5 | construction_data.bit_depth)) {
+	case pixel_type_hash::greyscale_1:
+	case pixel_type_hash::indexed_colour_1:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0000'0001, 1)
-	case static_cast<int>(pixel_type_hash::greyscale_2):
-	case static_cast<int>(pixel_type_hash::indexed_colour_2):
+	case pixel_type_hash::greyscale_2:
+	case pixel_type_hash::indexed_colour_2:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0000'0010, 1)
-	case static_cast<int>(pixel_type_hash::greyscale_4):
-	case static_cast<int>(pixel_type_hash::indexed_colour_4):
+	case pixel_type_hash::greyscale_4:
+	case pixel_type_hash::indexed_colour_4:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0000'0100, 1)
-	case static_cast<int>(pixel_type_hash::greyscale_8):
-	case static_cast<int>(pixel_type_hash::indexed_colour_8):
+	case pixel_type_hash::greyscale_8:
+	case pixel_type_hash::indexed_colour_8:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0000'1000, 1)
-	case static_cast<int>(pixel_type_hash::greyscale_16):
-	case static_cast<int>(pixel_type_hash::greyscale_with_alpha_8):
+	case pixel_type_hash::greyscale_16:
+	case pixel_type_hash::greyscale_with_alpha_8:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0001'0000, 2)
-	case static_cast<int>(pixel_type_hash::truecolour_8):
+	case pixel_type_hash::truecolour_8:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0001'1000, 3)
-	case static_cast<int>(pixel_type_hash::greyscale_with_alpha_16):
-	case static_cast<int>(pixel_type_hash::truecolour_with_alpha_8):
+	case pixel_type_hash::greyscale_with_alpha_16:
+	case pixel_type_hash::truecolour_with_alpha_8:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0010'0000, 4)
-	case static_cast<int>(pixel_type_hash::truecolour_16):
+	case pixel_type_hash::truecolour_16:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0011'0000, 6)
-	case static_cast<int>(pixel_type_hash::truecolour_with_alpha_16):
+	case pixel_type_hash::truecolour_with_alpha_16:
 		CONSTRUCT_SCANLINE_DATA_CASE(0b0100'0000, 8)
 	default:
 		assert(0 && "unknown pixel type");
@@ -276,25 +276,23 @@ std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduc
 }
 
 #define ASSIGN_PIXEL_CASE(type)\
-case static_cast<int>(pixel_type_hash::type):\
+case pixel_type_hash::type:\
 	assert(out.get_pixel_type() == pixel_type_number::type && "pixel type in out is other than expected");\
 	assert(out.get_array<type>().size() == construction_data.height && "array held by out should have a height of construction_data.height");\
 	{\
 		std::vector<std::vector<type>>& image_array{ out.get_array<type>() };\
 		if (construction_data.uses_interlacing) {\
 			for (std::uint_fast32_t i{ 0 }; i < construction_data.height; ++i) {\
-				assert(construction_data.width == image_array[i].size() && "width is less than expected");\
 				for (std::uint_fast32_t j{ 0 }; j < construction_data.width; ++j) {\
 					image_array[i][j] = to_pixel<type>(get_pixel(scanlines[0], i, j, bytes_per_pixel), {}, 0);\
 				}\
 			}\
 		} else {\
 			for (std::uint_fast32_t i{ 0 }; i < construction_data.height; ++i) {\
-				assert(construction_data.width == image_array[i].size() && "width is less than expected");\
 				for (std::uint_fast32_t j{ 0 }; j < construction_data.width; ++j) {\
 					for (std::uint_fast32_t delta_i{ 0 }; delta_i < 8 && i + delta_i < construction_data.height; ++delta_i) {\
 						for (std::uint_fast32_t delta_j{ 0 }; delta_j < 8 && j + delta_j < construction_data.width; ++delta_j) {\
-							std::uint_fast8_t reduced_image_number{ reduced_image_number_interlaced[delta_i][delta_j] - 1 };\
+							int reduced_image_number{ reduced_image_number_interlaced[delta_i][delta_j] - 1 };\
 							dimension_struct temp{ interlaced_dimensions(reduced_image_number, { i + delta_i + 1, j + delta_j + 1 }) };\
 							image_array[i + delta_i][j + delta_j] = to_pixel<type>(get_pixel(scanlines[reduced_image_number], temp.width - 1, temp.height - 1, bytes_per_pixel), {}, 0);\
 						}\
@@ -306,7 +304,7 @@ case static_cast<int>(pixel_type_hash::type):\
 	break;
 
 void scanline_data::write_to(image_data& out) {
-	switch (construction_data.colour_type << 5 | construction_data.bit_depth) {
+	switch (static_cast<pixel_type_hash>(construction_data.colour_type << 5 | construction_data.bit_depth)) {
 	ASSIGN_PIXEL_CASE(greyscale_1)
 	ASSIGN_PIXEL_CASE(greyscale_2)
 	ASSIGN_PIXEL_CASE(greyscale_4)
@@ -314,28 +312,26 @@ void scanline_data::write_to(image_data& out) {
 	ASSIGN_PIXEL_CASE(greyscale_16)
 	ASSIGN_PIXEL_CASE(truecolour_8)
 	ASSIGN_PIXEL_CASE(truecolour_16)
-	case static_cast<int>(pixel_type_hash::indexed_colour_1):
-	case static_cast<int>(pixel_type_hash::indexed_colour_2):
-	case static_cast<int>(pixel_type_hash::indexed_colour_4):
-	case static_cast<int>(pixel_type_hash::indexed_colour_8):
+	case pixel_type_hash::indexed_colour_1:
+	case pixel_type_hash::indexed_colour_2:
+	case pixel_type_hash::indexed_colour_4:
+	case pixel_type_hash::indexed_colour_8:
 		assert(out.get_pixel_type() == pixel_type_number::truecolour_8 && "pixel type in out is other than expected");
 		assert(out.get_array<truecolour_8>().size() == construction_data.height && "array held by out should have a height of construction_data.height");
 		{
 			std::vector<std::vector<truecolour_8>>& image_array{ out.get_array<truecolour_8>() };
 			if (construction_data.uses_interlacing) {
 				for (std::uint_fast32_t i{ 0 }; i < construction_data.height; ++i) {
-					assert(construction_data.width == image_array[i].size() && "width is less than expected");
 					for (std::uint_fast32_t j{ 0 }; j < construction_data.width; ++j) {
 						image_array[i][j] = to_pixel<truecolour_8>(get_pixel(scanlines[0], i, j, bytes_per_pixel), construction_data.palette, 1);
 					}
 				}
 			} else {
 				for (std::uint_fast32_t i{ 0 }; i < construction_data.height; ++i) {
-					assert(construction_data.width == image_array[i].size() && "width is less than expected");
 					for (std::uint_fast32_t j{ 0 }; j < construction_data.width; ++j) {
 						for (std::uint_fast32_t delta_i{ 0 }; delta_i < 8 && i + delta_i < construction_data.height; ++delta_i) {
 							for (std::uint_fast32_t delta_j{ 0 }; delta_j < 8 && j + delta_j < construction_data.width; ++delta_j) {
-								std::uint_fast8_t reduced_image_number{ reduced_image_number_interlaced[delta_i][delta_j] - 1 };
+								int reduced_image_number{ reduced_image_number_interlaced[delta_i][delta_j] - 1 };
 								dimension_struct temp{ interlaced_dimensions(reduced_image_number, { i + delta_i + 1, j + delta_j + 1 }) };
 								image_array[i + delta_i][j + delta_j] = to_pixel<truecolour_8>(get_pixel(scanlines[reduced_image_number], temp.width - 1, temp.height - 1, bytes_per_pixel), construction_data.palette, 1);
 							}

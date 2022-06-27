@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="png.h">
+    <ClInclude Include="png.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
