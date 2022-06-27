@@ -70,19 +70,21 @@ enum struct pixel_type_hash {
 };
 
 struct scanline_data {
-	// first index is reduced image number
-	// second index is scanline number
-	// scanlines[ ][ ][0] is filter method
-	std::vector<std::vector<std::vector<std::uint8_t>>> scanlines;
 	// reads in and produces scanlines
 	// construction_data should exist for the lifetime of scanline_data
 	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
 	// writes bytes as type to out
 	void write_to(image_data& out);
+	// assumes all filter methods are less than or equal to 4
 	void reconstruct_data();
+private:
 	const image_construction_data& construction_data;
 	// bytes per pixel is a fixed point number ddddd.ddd where d is a bit
 	std::uint_fast8_t bytes_back, bytes_per_pixel;
+	// first index is reduced image number
+	// second index is scanline number
+	// scanlines[ ][ ][0] is filter method
+	std::vector<std::vector<std::vector<std::uint8_t>>> scanlines;
 };
 
 struct dimension_struct {
@@ -93,3 +95,14 @@ struct dimension_struct {
 // in.height is assumed to be greater than 0
 // reduced_image_number is assumed to be less than 7
 dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, dimension_struct in);
+
+// gets a pixel from reduced image
+// first byte in each scanline is filter type
+// reduced_image[ ] returns a scanline
+// is a fixed point number ddddd.ddd where d is a bit
+// i is first index
+// j is second index
+// least significant byte is last byte read from scanline in reduced image
+// bytes per pixel is assumed to be 0.125, 0.25, 0.5, 1, 2, 3, 4, 6, or 8
+// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 7.2
+std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduced_image, std::uint_fast32_t i, std::uint_fast32_t j, std::uint_fast8_t bytes_per_pixel);

@@ -365,4 +365,39 @@ namespace chunk_types_tests {
 			Assert::IsTrue(dimension_struct{ 1, 11 } == interlaced_dimensions(0, input));
 		}
 	};
+	TEST_CLASS(get_pixel_tests) {
+	public:
+		TEST_METHOD(get_pixel_test_1) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b1000'0000 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 0, 0b0001) == 0b1);
+		}
+		TEST_METHOD(get_pixel_test_2) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0100'0000 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 1, 0b0001) == 0b1);
+		}
+		TEST_METHOD(get_pixel_test_3) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b1000'0000 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 0, 0b0010) == 0b10);
+		}
+		TEST_METHOD(get_pixel_test_4) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0000'0111 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 1, 0b0100) == 0b0111);
+		}
+		TEST_METHOD(get_pixel_test_5) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0000'0000, 0b0000'0111 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 3, 0b0100) == 0b0111);
+		}
+		TEST_METHOD(get_pixel_test_6) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0000'0000, 0b0010'0111 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 1, 0b1000) == 0b0010'0111);
+		}
+		TEST_METHOD(get_pixel_test_7) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0000'0000, 0b1111'0111 }, { 0, 0b0000'0000, 0b0010'0111 } };
+			Assert::IsTrue(get_pixel(reduced_image, 1, 1, 0b1000) == 0b0010'0111);
+		}
+		TEST_METHOD(get_pixel_test_8) {
+			std::vector<std::vector<std::uint8_t>> reduced_image{ { 0, 0b0100'0010, 0b1111'0111 }, { 0, 0b0000'0000, 0b0010'0111 } };
+			Assert::IsTrue(get_pixel(reduced_image, 0, 0, 0b10000) == 0b0100'0010'1111'0111);
+		}
+	};
 }

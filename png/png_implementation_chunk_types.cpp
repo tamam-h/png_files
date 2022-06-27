@@ -180,6 +180,20 @@ dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, d
 }
 
 scanline_data::scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in) : construction_data{ construction_data }, bytes_back{}, bytes_per_pixel{} {
+	static const auto handle_reading{
+		[](std::vector<std::vector<std::uint8_t>>& scanlines, std::uint_fast64_t width, std::uint_fast64_t height, const std::uint8_t*& position, const std::span<const std::uint8_t>& in) -> void {
+			scanlines.resize(height, std::vector<std::uint8_t>(width));
+			assert_can_read(position + width * height - 1, in);
+			for (std::vector<std::uint8_t>& i : scanlines) {
+				std::memcpy(i.data(), position, width);
+				position += width;
+				if (i[0] > 4) {
+					// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.2
+					throw std::runtime_error{ "filter type is larger than expected" };
+				}
+			}
+		}
+	};
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 7.2 and 9.2
 	switch (construction_data.colour_type << 5 | construction_data.bit_depth) {
 	case static_cast<int>(pixel_type_hash::greyscale_1):
@@ -227,9 +241,17 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 	default:
 		assert(0 && "unknown pixel type");
 	}
+	const std::uint8_t* position{ in.data() };
 	if (construction_data.uses_interlacing) {
-		
-
+		scanlines.resize(7);
+		for (std::uint_fast8_t reduced_image_number{ 0 }; reduced_image_number < 7; ++reduced_image_number) {
+			dimension_struct dimensions{ interlaced_dimensions(reduced_image_number, { construction_data.width, construction_data.height }) };
+			// width is a fixed point number ddddddddd'ddddddddd'dddddddd'ddddd.ddd where d is a bit
+			std::uint_fast64_t width{ static_cast<std::uint_fast64_t>(dimensions.width) * bytes_per_pixel }, height{ dimensions.height };
+			// width is a fixed point numbers ddddddddd'ddddddddd'dddddddd'dddddddd where d is a bit
+			width = (width >> 3) + static_cast<bool>(width & 0b0000'0111) + 1;
+			handle_reading(scanlines[reduced_image_number], width, height, position, in);
+		}
 	} else {
 		scanlines.emplace_back();
 		// width is a fixed point number ddddddddd'ddddddddd'dddddddd'ddddd.ddd where d is a bit
@@ -238,23 +260,96 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 		width = (width >> 3) + static_cast<bool>(width & 0b0000'0111) + 1;
 		assert(width > 1 && "scanlines with filter type should have a size of more than one");
 		assert(height > 0 && "there should be more than one scanline");
-		scanlines.back().resize(height, std::vector<std::uint8_t>(width));
-		const std::uint8_t* position{ in.data() };
-		assert_can_read(position + width * height - 1, in);
-		for (std::vector<std::uint8_t>& i : scanlines.back()) {
-			std::memcpy(i.data(), position, width);
-			position += width;
-			if (i[0] > 4) {
-				// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.2
-				throw std::runtime_error{ "filter method is larger than expected" };
+		handle_reading(scanlines.back(), width, height, position, in);
+	}
+}
+
+std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduced_image, std::uint_fast32_t i, std::uint_fast32_t j, std::uint_fast8_t bytes_per_pixel) {
+	assert(bytes_per_pixel > 0 && "bytes_per_pixel should not be equal to zero");
+	assert(i < reduced_image.size() && "invalid index i");
+	const std::vector<std::uint8_t>& scanline{ reduced_image[i] };
+	std::uint_fast64_t byte_index{ static_cast<std::uint_fast64_t>(bytes_per_pixel) * j }, bit_index{ byte_index & 0b111 };
+	byte_index >>= 3;
+	++byte_index;
+	assert(byte_index < scanline.size() && "out of range");
+	const std::uint8_t* position{ scanline.data() + byte_index };
+	if (bytes_per_pixel < 0b1000) { return (*position & ((1 << bytes_per_pixel) - 1 << 8 - bit_index - bytes_per_pixel)) >> 8 - bit_index - bytes_per_pixel; }
+	assert(bit_index == 0 && "should be at a byte boundary");
+	std::uint_fast64_t acc{ 0 };
+	while (bytes_per_pixel) {
+		acc <<= 8;
+		assert(position < scanline.data() + scanline.size() && "out of range");
+		acc |= *position++;
+		bytes_per_pixel -= 0b1000;
+	}
+	return acc;
+}
+
+void scanline_data::write_to(image_data& out) {
+}
+
+void scanline_data::reconstruct_data() {
+	if (construction_data.uses_interlacing) {
+		bool is_set{ 0 };
+		std::uint_fast8_t filter_method;
+		for (std::vector<std::vector<std::uint8_t>>& i : scanlines) {
+			for (std::vector<std::uint8_t>& j : i) {
+				for (std::uint8_t k : j) {
+					assert(j.size() > 1 && "scanlines should have a size of two or more: filter type and pixel data");
+					if (!is_set) {
+						filter_method = k;
+						is_set = 1;
+					} else if (k != filter_method) {
+						// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.1
+						throw std::runtime_error{ "all filter types should be the same if the image uses interlacing" };
+					}
+				}
+			}
+		}
+	}
+	static const auto access{
+		// 64 bit signed integer because can be negative and width or height of image are 4 byte unsigned integers
+		[](std::int_fast64_t i, std::int_fast64_t j, std::vector<std::vector<std::uint8_t>>& reduced_image) -> std::uint8_t {
+			return (i < 0 || j < 1) ? 0 : reduced_image[i][j];
+		}
+	};
+	static const auto paeth{
+		// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.4
+		[](std::uint_fast8_t a, std::uint_fast8_t b, std::uint_fast8_t c) -> std::uint_fast8_t {
+			int p{ a + b - c };
+			int pa{ std::abs(p - a) }, pb{ std::abs(p - b) }, pc{ std::abs(p - c) };
+			if (pa <= pb && pa <= pc) { return a; }
+			if (pb <= pc) { return b; }
+			return c;
+		}
+	};
+	for (std::vector<std::vector<std::uint8_t>>& reduced_image : scanlines) {
+		for (std::int_fast64_t i{ 0 }; i < reduced_image.size(); ++i) {
+			assert(reduced_image[i].size() > 1 && "scanlines should have a size of two or more: filter type and pixel data");
+			for (std::int_fast64_t j{ 1 }; j < reduced_image[i].size(); ++j) {
+				std::uint_fast8_t a{ access(i, j - bytes_back, reduced_image) }, b{ access(i - 1, j, reduced_image) };
+				switch (reduced_image[i][0]) {
+				case 0:
+					break;
+				case 1:
+					reduced_image[i][j] += a;
+					break;
+				case 2:
+					reduced_image[i][j] += b;
+					break;
+				case 3:
+					reduced_image[i][j] += (a + b) >> 1;
+					break;
+				case 4:
+					reduced_image[i][j] += paeth(a, b, access(i - 1, j - bytes_back, reduced_image));
+					break;
+				default:
+					assert(0 && "larger filter type than expected");
+				}
 			}
 		}
 	}
 }
-
-void scanline_data::write_to(image_data& out) {}
-
-void scanline_data::reconstruct_data() {}
 
 chunk_type_t IDAT_chunk::get_type() const {
 	return type;
