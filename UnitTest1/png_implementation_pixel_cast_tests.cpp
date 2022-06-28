@@ -5,6 +5,9 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace pixel_cast_tests {
+	bool operator==(const integral_pixel_info& first, const integral_pixel_info& second) {
+		return first.bytes == second.bytes && first.value == second.value;
+	}
 	TEST_CLASS(pixel_cast_tests) {
 	public:
 		TEST_METHOD(pixel_cast_test_1) {
@@ -155,6 +158,45 @@ namespace pixel_cast_tests {
 			greyscale_with_alpha_16 returned{ to_pixel<greyscale_with_alpha_16>(0b1110'1001'0001'0011'1110'1001'0001'0011, {}, 0) };
 			Assert::IsTrue(returned.grey == 0b1110'1001'0001'0011);
 			Assert::IsTrue(returned.alpha == 0b1110'1001'0001'0011);
+		}
+	};
+	TEST_CLASS(to_integral_pixel_tests) {
+		TEST_METHOD(to_integral_pixel_test_1) {
+			Assert::IsTrue(integral_pixel_info{ 0b1, 0 } == to_integral_pixel(greyscale_1{ 0 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_2) {
+			Assert::IsTrue(integral_pixel_info{ 0b1, 1 } == to_integral_pixel(greyscale_1{ 1 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_3) {
+			Assert::IsTrue(integral_pixel_info{ 0b10, 0b11 } == to_integral_pixel(greyscale_2{ 0b11 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_4) {
+			Assert::IsTrue(integral_pixel_info{ 0b100, 0b1010 } == to_integral_pixel(greyscale_4{ 0b1010 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_5) {
+			Assert::IsTrue(integral_pixel_info{ 0b1000, 0b1100'1010 } == to_integral_pixel(greyscale_8{ 0b1100'1010 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_6) {
+			Assert::IsTrue(integral_pixel_info{ 0b1'0000, 0b1100'1010'1111'1000 } == to_integral_pixel(greyscale_16{ 0b1100'1010'1111'1000 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_7) {
+			Assert::IsTrue(integral_pixel_info{ 0b1'1000, 0b1100'1010'1111'1010'1000'0001 } == to_integral_pixel(truecolour_8{ 0b1100'1010, 0b1111'1010, 0b1000'0001 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_8) {
+			Assert::IsTrue(integral_pixel_info{ 0b11'0000, 0b1100'1010'0011'1110'1111'1010'0000'1110'1000'0001'0011'0000 } == to_integral_pixel(truecolour_16{ 0b1100'1010'0011'1110, 0b1111'1010'0000'1110, 0b1000'0001'0011'0000 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_9) {
+			Assert::IsTrue(integral_pixel_info{ 0b1'0000, 0b1100'1010'0001'1110 } == to_integral_pixel(greyscale_with_alpha_8{ 0b1100'1010, 0b0001'1110 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_10) {
+			Assert::IsTrue(integral_pixel_info{ 0b10'0000, 0b1100'1010'1111'1000'1010'1111'0001'1011 } == to_integral_pixel(greyscale_with_alpha_16{ 0b1100'1010'1111'1000, 0b1010'1111'0001'1011 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_11) {
+			Assert::IsTrue(integral_pixel_info{ 0b10'0000, 0b1100'1010'1111'1010'1000'0001'1110'0011 } == to_integral_pixel(truecolour_with_alpha_8{ 0b1100'1010, 0b1111'1010, 0b1000'0001, 0b1110'0011 }));
+		}
+		TEST_METHOD(to_integral_pixel_test_12) {
+			Assert::IsTrue(integral_pixel_info{ 0b100'0000, 0b1100'1010'0011'1110'1111'1010'0000'1110'1000'0001'0011'0000'1110'1001'0110'0011 }
+				== to_integral_pixel(truecolour_with_alpha_16{ 0b1100'1010'0011'1110, 0b1111'1010'0000'1110, 0b1000'0001'0011'0000, 0b1110'1001'0110'0011 }));
 		}
 	};
 }
