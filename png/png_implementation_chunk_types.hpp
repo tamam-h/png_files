@@ -46,7 +46,6 @@ struct IEND_chunk : chunk_base {
 };
 
 // registers chunk types listed in this header file
-// is automatically called at beginning of program
 void register_chunk_types();
 
 // https://www.w3.org/TR/2003/REC-PNG-20031110/ section 11.2.2

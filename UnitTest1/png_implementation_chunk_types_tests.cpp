@@ -364,6 +364,10 @@ namespace chunk_types_tests {
 			dimension_struct input{ 1, 81 };
 			Assert::IsTrue(dimension_struct{ 1, 11 } == interlaced_dimensions(0, input));
 		}
+		TEST_METHOD(interlaced_dimensions_test_15) {
+			dimension_struct input{ 2, 1 };
+			Assert::IsTrue(dimension_struct{ 1, 1 } == interlaced_dimensions(5, input));
+		}
 	};
 	TEST_CLASS(get_pixel_tests) {
 	public:

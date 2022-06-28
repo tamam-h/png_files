@@ -2,6 +2,8 @@
 #include "png.hpp"
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_image_data.hpp"
+#include "png_implementation_pixel_types.hpp"
+#include "png_implementation_chunk_types.hpp"
 
 struct png::implementation : image_data {};
 
@@ -56,12 +58,19 @@ pixel_type_number png::get_pixel_type() const noexcept {
 	return pointer_to_implementation->get_pixel_type();
 }
 
-png::png(std::span<const std::uint8_t> in) : pointer_to_implementation{ new implementation } {
+png::png() : pointer_to_implementation{ new implementation } {
+	static const int chunk_registration{
+		[]() -> int {
+			register_chunk_types();
+			return 0;
+		} ()
+	};
+}
+
+png::png(std::span<const std::uint8_t> in) : png{} {
 	std::vector<std::unique_ptr<chunk_base>> chunks;
 	create_chunks(chunks, in);
 	set_image_data(*pointer_to_implementation, chunks);
 }
-
-png::png() : pointer_to_implementation{ new implementation } {}
 
 png::~png() {}

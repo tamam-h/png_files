@@ -144,10 +144,10 @@ void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<cons
 		if (chunk_size > INT32_MAX) { throw std::runtime_error{ "chunk size is larger than allowed" }; }
 		chunk_type_t chunk_type{ static_cast<chunk_type_t>(read_4(position, in)) };
 		if (!is_valid_chunk_type(chunk_type)) { throw std::runtime_error{ "chunk type is not valid" }; }
-		assert_can_read(position + chunk_size - 1, in);
-		std::uint_fast32_t crc{ crc32({ position - 4, position + chunk_size - 4 }) };
-		position += chunk_size - 4;
-		if (crc != read_4(position, in)) { throw std::runtime_error{ "stated CRC-32 does not match calculated CRC-32" }; }
+		assert_can_read(position + chunk_size + 3, in);
+		std::uint_fast32_t crc{ crc32({ position - 4, position + chunk_size }) };
+		position += chunk_size;
+		if (crc != read_4(position, in)) { throw std::runtime_error{"stated CRC-32 does not match calculated CRC-32"}; }
 		decltype(chunk_type_registry)::iterator it{ chunk_type_registry.find(chunk_type) };
 		if (it == chunk_type_registry.end()) {
 			if (is_critical_chunk_type(chunk_type)) { throw std::runtime_error{ "found critical chunk but chunk type is unknown" }; }

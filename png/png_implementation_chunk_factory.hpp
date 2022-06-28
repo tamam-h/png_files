@@ -12,7 +12,7 @@ using chunk_type_t = std::uint_fast32_t;
 struct image_construction_data {
 	std::uint_fast32_t width, height;
 	std::uint_fast8_t bit_depth, colour_type;
-	bool uses_interlacing;
+	bool uses_interlacing, pixel_data_is_set{ 0 };
 	std::vector<truecolour_8> palette;
 };
 
