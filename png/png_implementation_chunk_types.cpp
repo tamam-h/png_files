@@ -256,7 +256,7 @@ std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduc
 	return acc;
 }
 
-#define ASSIGN_PIXEL_CASE(type, hash, do_interlace)\
+#define ASSIGN_PIXEL_CASE(type, hash, use_palette)\
 case hash:\
 	assert(out.get_pixel_type() == pixel_type_number::type && "pixel type in out is other than expected");\
 	assert(out.get_array<type>().size() == construction_data.height && "array held by out should have a height of construction_data.height");\
@@ -266,7 +266,7 @@ case hash:\
 			assert(scanlines.size() == 1 && "there should be only one reduced image when not using interlacing");\
 			for (std::uint_fast32_t i{ 0 }; i < construction_data.height; ++i) {\
 				for (std::uint_fast32_t j{ 0 }; j < construction_data.width; ++j) {\
-					image_array[i][j] = to_pixel<type>(get_pixel(scanlines[0], i, j, bytes_per_pixel), {}, 0);\
+					image_array[i][j] = to_pixel<type>(get_pixel(scanlines[0], i, j, bytes_per_pixel), construction_data.palette, use_palette);\
 				}\
 			}\
 		} else {\
@@ -277,7 +277,7 @@ case hash:\
 						for (std::uint_fast32_t delta_j{ 0 }; delta_j < 8 && j + delta_j < construction_data.width; ++delta_j) {\
 							int reduced_image_number{ reduced_image_number_interlaced[delta_i][delta_j] - 1 };\
 							dimension_struct temp{ interlaced_dimensions(reduced_image_number, { j + delta_j + 1, i + delta_i + 1 }) };\
-							image_array[i + delta_i][j + delta_j] = to_pixel<type>(get_pixel(scanlines[reduced_image_number], temp.height - 1, temp.width - 1, bytes_per_pixel), construction_data.palette, do_interlace);\
+							image_array[i + delta_i][j + delta_j] = to_pixel<type>(get_pixel(scanlines[reduced_image_number], temp.height - 1, temp.width - 1, bytes_per_pixel), construction_data.palette, use_palette);\
 						}\
 					}\
 				}\

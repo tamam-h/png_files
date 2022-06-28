@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include "png_implementation_pixel_types.hpp"
 #include <span>
@@ -17,6 +18,8 @@ struct png {
 	void convert_to(pixel_type_number in);
 	// returns a pixel_type_number indicating the internal representation of image_data
 	pixel_type_number get_pixel_type() const noexcept;
+	// writes png file to out
+	void write_to(std::vector<std::uint8_t>& out) const;
 	png(std::span<const std::uint8_t> in);
 	png();
 	~png();

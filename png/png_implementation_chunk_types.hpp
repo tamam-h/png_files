@@ -72,10 +72,16 @@ struct scanline_data {
 	// reads in and produces scanlines
 	// construction_data should exist for the lifetime of scanline_data
 	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
+	// reads in and produces scanlines
+	scanline_data(const image_data& in);
 	// writes bytes as type to out
 	void write_to(image_data& out);
+	// writes bytes to out
+	void write_to(std::vector<std::uint8_t>& out);
 	// assumes all filter methods are less than or equal to 4
 	void reconstruct_data();
+	// filters data according to https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.2
+	void filter_data();
 private:
 	const image_construction_data& construction_data;
 	// bytes per pixel is a fixed point number ddddd.ddd where d is a bit

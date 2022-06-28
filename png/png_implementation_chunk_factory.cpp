@@ -137,7 +137,7 @@ void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<s
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in) {
 	const std::uint8_t* position{ in.data() };
 	// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.2
-	if (read_8(position, in) != (137ull << 56 | 80ull << 48 | 78ull << 40 | 71ull << 32 | 13ull << 24 | 10ull << 16 | 26ull << 8 | 10ull)) { throw std::runtime_error{ "file header is different than expected" }; }
+	if (read_8(position, in) != file_header) { throw std::runtime_error{ "file header is different than expected" }; }
 	while (1) {
 		std::uint32_t chunk_size{ read_4(position, in) };
 		// https://www.w3.org/TR/2003/REC-PNG-20031110/ section 5.3

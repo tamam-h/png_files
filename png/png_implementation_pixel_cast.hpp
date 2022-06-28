@@ -12,3 +12,16 @@ template <pixel_type end_type, pixel_type start_type> end_type pixel_cast(start_
 // https://www.w3.org/TR/2003/REC-PNG-20031110/ section 7.2
 // assumes type is truecolour_8 if uses_palette
 template <pixel_type type> type to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette);
+
+struct integral_pixel_info {
+	// bytes is a fixed point number ddddd.ddd where d is a bit
+	std::uint_fast8_t bytes;
+	// value is the pixel where the most significant byte is the first byte to be written
+	// the size of value is specified by bytes
+	std::uint_fast64_t value;
+};
+
+// converts a pixel to an integral_pixel
+// assumes type is not a floating point pixel type
+// assumes elements in in are under 1 << (bit depth)
+template <pixel_type type> integral_pixel_info to_integral_pixel(type in);

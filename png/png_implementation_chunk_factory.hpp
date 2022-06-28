@@ -111,6 +111,9 @@ void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<s
 // type of last chunk
 constexpr chunk_type_t end_chunk_type{ 0x4945'4e44 };
 
+// file header for png file
+constexpr std::uint_fast64_t file_header{ 0x8950'4E47'0D0A'1A0A };
+
 // creates chunks from in
 // outputs chunks to out
 // throws if there is an error reading

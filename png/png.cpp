@@ -74,3 +74,7 @@ png::png(std::span<const std::uint8_t> in) : png{} {
 }
 
 png::~png() {}
+
+void png::write_to(std::vector<std::uint8_t>& out) const {
+
+}
