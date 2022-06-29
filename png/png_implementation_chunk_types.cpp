@@ -6,6 +6,29 @@
 #include "png_implementation_pixel_types.hpp"
 #include "png_implementation_zlib_stream.hpp"
 
+#define CONVERT_NUMBER_TO_HASH_CASE(type)\
+case pixel_type_number::type:\
+	return pixel_type_hash::type;
+
+// throws if there is no pixel_type_hash that corresponds with in
+pixel_type_hash to_pixel_type_hash(pixel_type_number in) {
+	switch (in) {
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_1)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_2)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_4)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_8)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_16)
+	CONVERT_NUMBER_TO_HASH_CASE(truecolour_8)
+	CONVERT_NUMBER_TO_HASH_CASE(truecolour_16)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_with_alpha_8)
+	CONVERT_NUMBER_TO_HASH_CASE(greyscale_with_alpha_16)
+	CONVERT_NUMBER_TO_HASH_CASE(truecolour_with_alpha_8)
+	CONVERT_NUMBER_TO_HASH_CASE(truecolour_with_alpha_16)
+	default:
+		throw std::runtime_error{ "can\'t convert from pixel_type_number to pixel_type_hash" };
+	}
+}
+
 IHDR_chunk::IHDR_chunk(std::uint_fast32_t width, std::uint_fast32_t height, std::uint_fast8_t bit_depth, std::uint_fast8_t colour_type, std::uint_fast8_t compression_method, std::uint_fast8_t filter_method,
 	std::uint_fast8_t interlace_method) : width{ width }, height{ height }, bit_depth{ bit_depth }, colour_type{ colour_type }, compression_method{ compression_method }, filter_method{ filter_method },
 	interlace_method{ interlace_method } {}

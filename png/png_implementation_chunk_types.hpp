@@ -68,12 +68,19 @@ enum struct pixel_type_hash {
 	truecolour_with_alpha_16 = 0b1101'0000
 };
 
+// returns pixel_type_hash corresponding to in
+// throws if there is no pixel_type_hash that corresponds with in
+pixel_type_hash to_pixel_type_hash(pixel_type_number in);
+
 struct scanline_data {
 	// reads in and produces scanlines
 	// construction_data should exist for the lifetime of scanline_data
 	scanline_data(const image_construction_data& construction_data, std::span<const std::uint8_t> in);
 	// reads in and produces scanlines
-	scanline_data(const image_data& in);
+	// assumes in contains a rectangular array of pixels
+	// assumes contained_type matches the contained pixel type of in
+	// assumes width and height match the width and height of the contained array in in
+	scanline_data(const image_data& in, pixel_type_hash contained_type, std::uint_fast32_t width, std::uint_fast32_t height);
 	// writes bytes as type to out
 	void write_to(image_data& out);
 	// writes bytes to out
@@ -81,7 +88,8 @@ struct scanline_data {
 	// assumes all filter methods are less than or equal to 4
 	void reconstruct_data();
 	// filters data according to https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.2
-	void filter_data();
+	// returns interlace method
+	std::uint_fast8_t filter_data();
 private:
 	const image_construction_data& construction_data;
 	// bytes per pixel is a fixed point number ddddd.ddd where d is a bit

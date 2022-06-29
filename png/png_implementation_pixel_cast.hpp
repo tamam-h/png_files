@@ -27,4 +27,6 @@ struct integral_pixel_info {
 template <pixel_type type> integral_pixel_info to_integral_pixel(type in);
 
 // writes an integral pixel to position and then advances position the number of bytes written
+// assumes in.bytes is greater than or equal to 0b1000
+// assumes in.bytes & 0b111 is equal to zero
 void write(std::uint8_t*& position, integral_pixel_info in);

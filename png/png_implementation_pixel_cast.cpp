@@ -356,6 +356,8 @@ template <> integral_pixel_info to_integral_pixel(truecolour_with_alpha_16 in) {
 }
 
 void write(std::uint8_t*& position, integral_pixel_info in) {
+	assert(in.bytes & 0b111 == 0 && "write only works with a whole number of bytes");
+	assert(in.bytes >= 0b1000 && "write doesn\'t work with 0 bytes to be written");
 	std::uint_fast64_t mask{ 0xff };
 	mask <<= in.bytes - 0b1000;
 	std::uint_fast8_t back{ in.bytes };
