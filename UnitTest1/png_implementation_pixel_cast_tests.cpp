@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_pixel_cast.hpp"
 #include "png_implementation_pixel_types.hpp"
 #include <CppUnitTest.h>
@@ -161,6 +162,7 @@ namespace pixel_cast_tests {
 		}
 	};
 	TEST_CLASS(to_integral_pixel_tests) {
+	public:
 		TEST_METHOD(to_integral_pixel_test_1) {
 			Assert::IsTrue(integral_pixel_info{ 0b1, 0 } == to_integral_pixel(greyscale_1{ 0 }));
 		}
@@ -197,6 +199,21 @@ namespace pixel_cast_tests {
 		TEST_METHOD(to_integral_pixel_test_12) {
 			Assert::IsTrue(integral_pixel_info{ 0b100'0000, 0b1100'1010'0011'1110'1111'1010'0000'1110'1000'0001'0011'0000'1110'1001'0110'0011 }
 				== to_integral_pixel(truecolour_with_alpha_16{ 0b1100'1010'0011'1110, 0b1111'1010'0000'1110, 0b1000'0001'0011'0000, 0b1110'1001'0110'0011 }));
+		}
+	};
+	TEST_CLASS(write_tests) {
+	public:
+		TEST_METHOD(write_test_1) {
+			std::uint8_t buffer[4], * pos{ buffer };
+			const std::uint8_t* cpos{ buffer };
+			write(pos, { 32, 0xabcdef89 });
+			Assert::IsTrue(read_4(cpos, { buffer, buffer + 4 }) == 0xabcdef89);
+		}
+		TEST_METHOD(write_test_2) {
+			std::uint8_t buffer[8], * pos{ buffer };
+			const std::uint8_t* cpos{ buffer };
+			write(pos, { 64, 0xabcd'ef89'1234'5678 });
+			Assert::IsTrue(read_8(cpos, { buffer, buffer + 8 }) == 0xabcd'ef89'1234'5678);
 		}
 	};
 }

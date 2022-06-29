@@ -354,3 +354,14 @@ template <> integral_pixel_info to_integral_pixel(truecolour_with_alpha_16 in) {
 	assert(in.alpha < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	return { 0b100'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 48 | static_cast<std::uint_fast64_t>(in.green) << 32 | static_cast<std::uint_fast64_t>(in.blue) << 16 | in.alpha) };
 }
+
+void write(std::uint8_t*& position, integral_pixel_info in) {
+	std::uint_fast64_t mask{ 0xff };
+	mask <<= in.bytes - 0b1000;
+	std::uint_fast8_t back{ in.bytes };
+	while (mask) {
+		back -= 0b1000;
+		*position++ = (in.value & mask) >> back;
+		mask >>= 0b1000;
+	}
+}

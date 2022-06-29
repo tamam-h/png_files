@@ -25,3 +25,6 @@ struct integral_pixel_info {
 // assumes type is not a floating point pixel type
 // assumes elements in in are under 1 << (bit depth)
 template <pixel_type type> integral_pixel_info to_integral_pixel(type in);
+
+// writes an integral pixel to position and then advances position the number of bytes written
+void write(std::uint8_t*& position, integral_pixel_info in);
