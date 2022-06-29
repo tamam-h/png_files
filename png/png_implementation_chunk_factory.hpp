@@ -78,12 +78,6 @@ void assert_can_read(const std::uint8_t* position, const std::span<const std::ui
 // assumes position is at first element of in or beyond
 std::uint_fast32_t read_4(const std::uint8_t*& position, const std::span<const std::uint8_t>& in);
 
-// writes a 4 byte unsigned integer to position[0] through position[3] and then advances position
-// the most significant byte is first
-// throws if can't write to that position
-// assumes position is at first element of out or beyond
-void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out);
-
 // reads an 8 byte unsigned integer from in at position
 // the most significant byte is first
 // throws if can't read from that position
@@ -91,22 +85,11 @@ void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<
 // assumes position is at first element of in or beyond
 std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const std::uint8_t>& in);
 
-// writes an 8 byte unsigned integer to position[0] through position[7] and then advances position
-// the most significant byte is first
-// throws if can't write to that position
-// assumes position is at first element of out or beyond
-void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out);
-
 // reads a 1 byte unsigned integer from in at position
 // throws if can't read from that position
 // advances position
 // assumes position is at first element of in or beyond
 std::uint_fast8_t read_1(const std::uint8_t*& position, const std::span<const std::uint8_t>& in);
-
-// writes an 1 byte unsigned integer to position[0] and then advances position
-// throws if can't write to that position
-// assumes position is at first element of out or beyond
-void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out);
 
 // type of last chunk
 constexpr chunk_type_t end_chunk_type{ 0x4945'4e44 };

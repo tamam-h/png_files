@@ -89,16 +89,6 @@ std::uint_fast8_t read_1(const std::uint8_t*& position, const std::span<const st
 	return *position++;
 }
 
-void write_4(std::uint_fast32_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data() && "position should be greater than or equal to start of input data");
-	assert_can_read(position + 3, out);
-	position[0] = (value & 0xff00'0000) >> 24;
-	position[1] = (value & 0x00ff'0000) >> 16;
-	position[2] = (value & 0x0000'ff00) >> 8;
-	position[3] = (value & 0x0000'00ff);
-	position += 4;
-}
-
 std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const std::uint8_t>& in) {
 	assert(position >= in.data() && "position should be greater than or equal to start of input data");
 	assert_can_read(position + 7, in);
@@ -112,26 +102,6 @@ std::uint_fast64_t read_8(const std::uint8_t*& position, const std::span<const s
 		| static_cast<std::uint_fast64_t>(position[7]) };
 	position += 8;
 	return acc;
-}
-
-void write_8(std::uint_fast64_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data() && "position should be greater than or equal to start of input data");
-	assert_can_read(position + 7, out);
-	position[0] = static_cast<std::uint8_t>((value & 0xff00'0000'0000'0000) >> 56);
-	position[1] = static_cast<std::uint8_t>((value & 0x00ff'0000'0000'0000) >> 48);
-	position[2] = static_cast<std::uint8_t>((value & 0x0000'ff00'0000'0000) >> 40);
-	position[3] = static_cast<std::uint8_t>((value & 0x0000'00ff'0000'0000) >> 32);
-	position[4] = static_cast<std::uint8_t>((value & 0x0000'0000'ff00'0000) >> 24);
-	position[5] = static_cast<std::uint8_t>((value & 0x0000'0000'00ff'0000) >> 16);
-	position[6] = static_cast<std::uint8_t>((value & 0x0000'0000'0000'ff00) >> 8);
-	position[7] = static_cast<std::uint8_t>((value & 0x0000'0000'0000'00ff));
-	position += 8;
-}
-
-void write_1(std::uint_fast8_t value, std::uint8_t*& position, const std::span<std::uint8_t>& out) {
-	assert(position >= out.data() && "position should be greater than or equal to start of input data");
-	assert_can_read(position, out);
-	*position++ = value;
 }
 
 void create_chunks(std::vector<std::unique_ptr<chunk_base>>& out, std::span<const std::uint8_t> in) {

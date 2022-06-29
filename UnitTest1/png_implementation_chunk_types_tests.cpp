@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
+#include "png_implementation_pixel_cast.hpp"
 #include "png_implementation_zlib_stream.hpp"
 #include <CppUnitTest.h>
 
@@ -16,10 +17,10 @@ namespace chunk_types_tests {
 			std::vector<std::uint8_t> data(13);
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
-			write_4(234, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 234 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			construct_IHDR(span, vector);
 		}
@@ -28,10 +29,10 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(0, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 0 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -45,10 +46,10 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(18, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(3, position, span);
+			write(position, { 32, 18 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 3 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -62,11 +63,11 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(18, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 18 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -80,12 +81,12 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(18, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
-			write_1(0, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 18 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
+			write(position, { 8, 0 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -99,13 +100,13 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(18, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
-			write_1(0, position, span);
-			write_1(0, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 18 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
+			write(position, { 8, 0 });
+			write(position, { 8, 0 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -119,10 +120,10 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(499, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 499 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -136,10 +137,10 @@ namespace chunk_types_tests {
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
 			bool should_fail{ 1 };
-			write_4(499, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 499 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			try {
 				construct_IHDR(span, vector);
@@ -152,10 +153,10 @@ namespace chunk_types_tests {
 			std::vector<std::uint8_t> data(13);
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
 			std::uint8_t* position{ data.data() };
-			write_4(234, position, span);
-			write_4(424, position, span);
-			write_1(16, position, span);
-			write_1(4, position, span);
+			write(position, { 32, 234 });
+			write(position, { 32, 424 });
+			write(position, { 8, 16 });
+			write(position, { 8, 4 });
 			std::vector<std::unique_ptr<chunk_base>> vector;
 			vector.push_back(construct_IHDR(span, vector));
 			bool should_fail{ 1 };

@@ -143,26 +143,6 @@ namespace png_implementation_chunk_factory_tests {
 			Assert::IsFalse(should_fail);
 		}
 	};
-	TEST_CLASS(write_4_tests) {
-	public:
-		TEST_METHOD(write_4_test_1) {
-			std::uint8_t buffer[4], * position{ buffer };
-			write_4(0xfa05'1034, position, { buffer, buffer + 4 });
-			position -= 4;
-			const std::uint8_t* pos{ position };
-			Assert::IsTrue(read_4(pos, { buffer, buffer + 4 }) == 0xfa05'1034);
-		}
-		TEST_METHOD(write_4_test_2) {
-			std::uint8_t buffer[4], *position{ buffer };
-			bool should_fail{ 1 };
-			try {
-				write_4(0, position, { buffer, buffer + 2 });
-			} catch (...) {
-				should_fail = 0;
-			}
-			Assert::IsFalse(should_fail);
-		}
-	};
 	TEST_CLASS(read_8_tests) {
 	public:
 		TEST_METHOD(read_8_test_1) {
@@ -188,26 +168,6 @@ namespace png_implementation_chunk_factory_tests {
 			Assert::IsFalse(should_fail);
 		}
 	};
-	TEST_CLASS(write_8_tests) {
-	public:
-		TEST_METHOD(write_8_test_1) {
-			std::uint8_t buffer[8], * position{ buffer };
-			write_8(0xfa05'1034'3322'0034, position, { buffer, buffer + 8 });
-			position -= 8;
-			const std::uint8_t* pos{ position };
-			Assert::IsTrue(read_8(pos, { buffer, buffer + 8 }) == 0xfa05'1034'3322'0034);
-		}
-		TEST_METHOD(write_8_test_2) {
-			std::uint8_t buffer[8], * position{ buffer };
-			bool should_fail{ 1 };
-			try {
-				write_8(0, position, { buffer, buffer + 2 });
-			} catch (...) {
-				should_fail = 0;
-			}
-			Assert::IsFalse(should_fail);
-		}
-	};
 	TEST_CLASS(read_1_tests) {
 	public:
 		TEST_METHOD(read_1_test_1) {
@@ -223,26 +183,6 @@ namespace png_implementation_chunk_factory_tests {
 			bool should_fail{ 1 };
 			try {
 				read_1(position, { buffer, buffer });
-			} catch (...) {
-				should_fail = 0;
-			}
-			Assert::IsFalse(should_fail);
-		}
-	};
-	TEST_CLASS(write_1_tests) {
-	public:
-		TEST_METHOD(write_1_test_1) {
-			std::uint8_t buffer[1], * position{ buffer };
-			write_1(0x34, position, { buffer, buffer + 1 });
-			--position;
-			const std::uint8_t* pos{ position };
-			Assert::IsTrue(read_1(pos, { buffer, buffer + 1 }) == 0x34);
-		}
-		TEST_METHOD(write_1_test_2) {
-			std::uint8_t buffer[1], * position{ buffer };
-			bool should_fail{ 1 };
-			try {
-				write_1(0, position, { buffer, buffer });
 			} catch (...) {
 				should_fail = 0;
 			}
