@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "png_implementation_pixel_cast.hpp"
+#include "png_implementation_macros.hpp"
 
 using floating_type = float;
 
@@ -199,10 +200,10 @@ template <pixel_type end_type, pixel_type start_type> end_type pixel_cast(start_
 	}
 }
 
-#define INSTANTIATE_PIXEL_CAST_1(start_type, end_type) \
+#define INSTANTIATE_PIXEL_CAST_1(start_type, end_type)\
 template end_type pixel_cast<end_type, start_type>(start_type);
 
-#define INSTANTIATE_PIXEL_CAST_2(start_type) \
+#define INSTANTIATE_PIXEL_CAST_2(start_type)\
 INSTANTIATE_PIXEL_CAST_1(start_type, greyscale_1)\
 INSTANTIATE_PIXEL_CAST_1(start_type, greyscale_2)\
 INSTANTIATE_PIXEL_CAST_1(start_type, greyscale_4)\
@@ -219,21 +220,7 @@ INSTANTIATE_PIXEL_CAST_1(start_type, truecolour_with_alpha_8)\
 INSTANTIATE_PIXEL_CAST_1(start_type, truecolour_with_alpha_16)\
 INSTANTIATE_PIXEL_CAST_1(start_type, truecolour_with_alpha_float)
 
-INSTANTIATE_PIXEL_CAST_2(greyscale_1)
-INSTANTIATE_PIXEL_CAST_2(greyscale_2)
-INSTANTIATE_PIXEL_CAST_2(greyscale_4)
-INSTANTIATE_PIXEL_CAST_2(greyscale_8)
-INSTANTIATE_PIXEL_CAST_2(greyscale_16)
-INSTANTIATE_PIXEL_CAST_2(greyscale_float)
-INSTANTIATE_PIXEL_CAST_2(truecolour_8)
-INSTANTIATE_PIXEL_CAST_2(truecolour_16)
-INSTANTIATE_PIXEL_CAST_2(truecolour_float)
-INSTANTIATE_PIXEL_CAST_2(greyscale_with_alpha_8)
-INSTANTIATE_PIXEL_CAST_2(greyscale_with_alpha_16)
-INSTANTIATE_PIXEL_CAST_2(greyscale_with_alpha_float)
-INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_8)
-INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_16)
-INSTANTIATE_PIXEL_CAST_2(truecolour_with_alpha_float)
+APPLY_TO_ALL_PIXEL_TYPES(INSTANTIATE_PIXEL_CAST_2)
 
 template <> greyscale_1 to_pixel(std::uint_fast64_t in, const std::vector<truecolour_8>& palette, bool uses_palette) {
 	assert(!uses_palette && "can\'t use palette when type is not truecolour_8");

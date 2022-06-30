@@ -110,7 +110,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	};
 	std::uint_fast64_t file_size{
 		[&zlib_stream]() -> std::uint_fast64_t {
-			std::uint_fast32_t div{ zlib_stream.compressed_data.size() / INT32_MAX }, rem{ zlib_stream.compressed_data.size() % INT32_MAX };
+			std::uint_fast64_t div{ zlib_stream.compressed_data.size() / INT32_MAX }, rem{ zlib_stream.compressed_data.size() % INT32_MAX };
 			std::uint_fast64_t acc{ 45ull + div * (INT32_MAX + 12ull) };
 			if (rem) { acc += rem + 12ull; }
 			return acc;
@@ -132,7 +132,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	write(position, { 32, crc32({ position - 17, position }) });
 	const std::uint8_t* const end_of_zlib_stream{ zlib_stream.compressed_data.data() + zlib_stream.compressed_data.size() };
 	while (file_size) {
-		std::uint_fast32_t writing_size{ std::min(file_size, static_cast<std::uint_fast64_t>(INT32_MAX)) };
+		std::uint_fast64_t writing_size{ std::min(file_size, static_cast<std::uint_fast64_t>(INT32_MAX)) };
 		file_size -= writing_size;
 		write(position, { 32, writing_size });
 		write(position, { 32, IDAT_chunk::type });

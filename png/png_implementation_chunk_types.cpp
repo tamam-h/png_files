@@ -2,6 +2,7 @@
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
 #include "png_implementation_image_data.hpp"
+#include "png_implementation_macros.hpp"
 #include "png_implementation_pixel_cast.hpp"
 #include "png_implementation_pixel_types.hpp"
 #include "png_implementation_zlib_stream.hpp"
@@ -13,17 +14,7 @@ case pixel_type_number::type:\
 // throws if there is no pixel_type_hash that corresponds with in
 pixel_type_hash to_pixel_type_hash(pixel_type_number in) {
 	switch (in) {
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_1)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_2)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_4)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_8)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_16)
-	CONVERT_NUMBER_TO_HASH_CASE(truecolour_8)
-	CONVERT_NUMBER_TO_HASH_CASE(truecolour_16)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_with_alpha_8)
-	CONVERT_NUMBER_TO_HASH_CASE(greyscale_with_alpha_16)
-	CONVERT_NUMBER_TO_HASH_CASE(truecolour_with_alpha_8)
-	CONVERT_NUMBER_TO_HASH_CASE(truecolour_with_alpha_16)
+	APPLY_TO_WRITABLE_PIXEL_TYPES(CONVERT_NUMBER_TO_HASH_CASE)
 	default:
 		throw std::runtime_error{ "can\'t convert from pixel_type_number to pixel_type_hash" };
 	}

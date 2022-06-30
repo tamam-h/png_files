@@ -45,6 +45,9 @@
     <ClInclude Include="png_implementation_chunk_types.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="png_implementation_macros.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="png.cpp">

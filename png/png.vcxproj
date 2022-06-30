@@ -151,6 +151,7 @@
     <ClInclude Include="png_implementation_chunk_types.hpp" />
     <ClInclude Include="png_implementation_deflate_algorithm.hpp" />
     <ClInclude Include="png_implementation_image_data.hpp" />
+    <ClInclude Include="png_implementation_macros.hpp" />
     <ClInclude Include="png_implementation_pixel_cast.hpp" />
     <ClInclude Include="png_implementation_pixel_types.hpp" />
     <ClInclude Include="png_implementation_zlib_stream.hpp" />
