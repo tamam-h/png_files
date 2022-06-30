@@ -21,10 +21,27 @@ struct integral_pixel_info {
 	std::uint_fast64_t value;
 };
 
-// converts a pixel to an integral_pixel
+// converts a pixel to std::uint_fast64_t
+// most significant byte should be written first
+// to be used in conjunction with integral_pixel_size
 // assumes type is not a floating point pixel type
 // assumes elements in in are under 1 << (bit depth)
-template <pixel_type type> integral_pixel_info to_integral_pixel(type in);
+template <pixel_type type> std::uint_fast64_t to_integral_pixel(type in);
+
+// integral_pixel_size is a fixed point number ddddd.ddd where d is a bit
+// to be used in conjunction with to_integral_pixel to make integral_pixel_info
+template <pixel_type type> constexpr std::uint_fast8_t integral_pixel_size{ UINT_FAST8_MAX };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_1>{ 0b1 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_2>{ 0b10 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_4>{ 0b100 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_8>{ 0b1000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_16>{ 0b1'0000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<truecolour_8>{ 0b1'1000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<truecolour_16>{ 0b11'0000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_with_alpha_8>{ 0b1'0000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<greyscale_with_alpha_16>{ 0b10'0000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<truecolour_with_alpha_8>{ 0b10'0000 };
+template <> constexpr std::uint_fast8_t integral_pixel_size<truecolour_with_alpha_16>{ 0b100'0000 };
 
 // writes an integral pixel to position and then advances position the number of bytes written
 // assumes in.bytes is greater than or equal to 0b1000

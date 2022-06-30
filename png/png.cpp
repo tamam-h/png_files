@@ -3,6 +3,7 @@
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
 #include "png_implementation_image_data.hpp"
+#include "png_implementation_macros.hpp"
 #include "png_implementation_pixel_cast.hpp"
 #include "png_implementation_pixel_types.hpp"
 #include "png_implementation_zlib_stream.hpp"
@@ -20,26 +21,6 @@ template <pixel_type type> const std::vector<std::vector<type>>& png::get_array(
 template <pixel_type type> void png::convert_to() {
 	pointer_to_implementation->convert_to<type>();
 }
-
-#define APPLY_TO_WRITABLE_PIXEL_TYPES(macro)\
-macro(greyscale_1)\
-macro(greyscale_2)\
-macro(greyscale_4)\
-macro(greyscale_8)\
-macro(greyscale_16)\
-macro(truecolour_8)\
-macro(truecolour_16)\
-macro(greyscale_with_alpha_8)\
-macro(greyscale_with_alpha_16)\
-macro(truecolour_with_alpha_8)\
-macro(truecolour_with_alpha_16)\
-
-#define APPLY_TO_ALL_PIXEL_TYPES(macro)\
-APPLY_TO_WRITABLE_PIXEL_TYPES(macro)\
-macro(greyscale_float)\
-macro(truecolour_float)\
-macro(greyscale_with_alpha_float)\
-macro(truecolour_with_alpha_float)
 
 #define INSTANTIATE_FUNCTIONS(type)\
 template std::vector<std::vector<type>>& png::get_array<type>();\
@@ -83,10 +64,12 @@ png::~png() {}
 case pixel_type_hash::type:\
 	{\
 		const std::vector<std::vector<type>>& arr{ pointer_to_implementation->get_array<type>() };\
-		height = arr.size();\
+		height = static_cast<std::uint_fast32_t>(arr.size());\
 		assert(height && "height should not be zero");\
-		width = arr[0].size();\
+		assert(height <= INT32_MAX && "height is too big to write");\
+		width = static_cast<std::uint_fast32_t>(arr[0].size());\
 		assert(width && "width should not be zero");\
+		assert(width <= INT32_MAX && "width is too big to write");\
 	}\
 	break;
 

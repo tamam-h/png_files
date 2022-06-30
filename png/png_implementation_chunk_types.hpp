@@ -82,13 +82,14 @@ struct scanline_data {
 	// assumes width and height match the width and height of the contained array in in
 	scanline_data(const image_data& in, pixel_type_hash contained_type, std::uint_fast32_t width, std::uint_fast32_t height);
 	// writes bytes as type to out
-	void write_to(image_data& out);
+	void write_to(image_data& out) const;
 	// writes bytes to out
-	void write_to(std::vector<std::uint8_t>& out);
+	void write_to(std::vector<std::uint8_t>& out) const;
 	// assumes all filter methods are less than or equal to 4
 	void reconstruct_data();
 	// filters data according to https://www.w3.org/TR/2003/REC-PNG-20031110/ section 9.2
-	// returns interlace method
+	// returns interlace method according to https://www.w3.org/TR/2003/REC-PNG-20031110/ section 8.2
+	// assumes image is a rectangular array of pixels
 	std::uint_fast8_t filter_data();
 private:
 	const image_construction_data& construction_data;

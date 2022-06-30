@@ -285,65 +285,65 @@ template <> truecolour_with_alpha_16 to_pixel(std::uint_fast64_t in, const std::
 		static_cast<decltype(truecolour_with_alpha_16{}.blue)>((in & (((1ull << 16) - 1) << 16)) >> 16), static_cast<decltype(truecolour_with_alpha_16{}.alpha)>(in & ((1ull << 16) - 1)) };
 }
 
-template <> integral_pixel_info to_integral_pixel(greyscale_1 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_1 in) {
 	assert(in.grey < (1 << 1) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b1, static_cast<decltype(integral_pixel_info{}.value)>(in.grey) };
+	return static_cast<decltype(integral_pixel_info{}.value)>(in.grey);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_2 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_2 in) {
 	assert(in.grey < (1 << 2) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b10, static_cast<decltype(integral_pixel_info{}.value)>(in.grey) };
+	return 0b10, static_cast<decltype(integral_pixel_info{}.value)>(in.grey);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_4 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_4 in) {
 	assert(in.grey < (1 << 4) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b100, static_cast<decltype(integral_pixel_info{}.value)>(in.grey) };
+	return 0b100, static_cast<decltype(integral_pixel_info{}.value)>(in.grey);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_8 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_8 in) {
 	assert(in.grey < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b1000, static_cast<decltype(integral_pixel_info{}.value)>(in.grey) };
+	return 0b1000, static_cast<decltype(integral_pixel_info{}.value)>(in.grey);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_16 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_16 in) {
 	assert(in.grey < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b1'0000, static_cast<decltype(integral_pixel_info{}.value)>(in.grey) };
+	return 0b1'0000, static_cast<decltype(integral_pixel_info{}.value)>(in.grey);
 }
-template <> integral_pixel_info to_integral_pixel(truecolour_8 in) {
+template <> std::uint_fast64_t to_integral_pixel(truecolour_8 in) {
 	assert(in.red < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.green < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.blue < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b1'1000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 16 | static_cast<std::uint_fast64_t>(in.green) << 8 | in.blue) };
+	return 0b1'1000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 16 | static_cast<std::uint_fast64_t>(in.green) << 8 | in.blue);
 }
-template <> integral_pixel_info to_integral_pixel(truecolour_16 in) {
+template <> std::uint_fast64_t to_integral_pixel(truecolour_16 in) {
 	assert(in.red < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.green < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.blue < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b11'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 32 | static_cast<std::uint_fast64_t>(in.green) << 16 | in.blue) };
+	return 0b11'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 32 | static_cast<std::uint_fast64_t>(in.green) << 16 | in.blue);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_with_alpha_8 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_with_alpha_8 in) {
 	assert(in.grey < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.alpha < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b1'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.grey) << 8 | in.alpha) };
+	return 0b1'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.grey) << 8 | in.alpha);
 }
-template <> integral_pixel_info to_integral_pixel(greyscale_with_alpha_16 in) {
+template <> std::uint_fast64_t to_integral_pixel(greyscale_with_alpha_16 in) {
 	assert(in.grey < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.alpha < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b10'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.grey) << 16 | in.alpha) };
+	return 0b10'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.grey) << 16 | in.alpha);
 }
-template <> integral_pixel_info to_integral_pixel(truecolour_with_alpha_8 in) {
+template <> std::uint_fast64_t to_integral_pixel(truecolour_with_alpha_8 in) {
 	assert(in.red < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.green < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.blue < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.alpha < (1 << 8) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b10'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 24 | static_cast<std::uint_fast64_t>(in.green) << 16 | static_cast<std::uint_fast64_t>(in.blue) << 8 | in.alpha) };
+	return 0b10'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 24 | static_cast<std::uint_fast64_t>(in.green) << 16 | static_cast<std::uint_fast64_t>(in.blue) << 8 | in.alpha);
 }
-template <> integral_pixel_info to_integral_pixel(truecolour_with_alpha_16 in) {
+template <> std::uint_fast64_t to_integral_pixel(truecolour_with_alpha_16 in) {
 	assert(in.red < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.green < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.blue < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
 	assert(in.alpha < (1ull << 16) && "can\'t return integral_pixel_info when elements of in are greater than expected");
-	return { 0b100'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 48 | static_cast<std::uint_fast64_t>(in.green) << 32 | static_cast<std::uint_fast64_t>(in.blue) << 16 | in.alpha) };
+	return 0b100'0000, static_cast<decltype(integral_pixel_info{}.value)>(static_cast<std::uint_fast64_t>(in.red) << 48 | static_cast<std::uint_fast64_t>(in.green) << 32 | static_cast<std::uint_fast64_t>(in.blue) << 16 | in.alpha);
 }
 
 void write(std::uint8_t*& position, integral_pixel_info in) {
-	assert(in.bytes & 0b111 == 0 && "write only works with a whole number of bytes");
+	assert((in.bytes & 0b111) == 0 && "write only works with a whole number of bytes");
 	assert(in.bytes >= 0b1000 && "write doesn\'t work with 0 bytes to be written");
 	std::uint_fast64_t mask{ 0xff };
 	mask <<= in.bytes - 0b1000;
