@@ -74,7 +74,7 @@ case pixel_type_hash::type:\
 	break;
 
 void png::write_to(std::vector<std::uint8_t>& out) const {
-	pixel_type_hash image_info{ to_pixel_type_hash(get_pixel_type()) };
+	const pixel_type_hash image_info{ to_pixel_type_hash(get_pixel_type()) };
 	std::uint_fast32_t width{}, height{};
 	switch (image_info) {
 	APPLY_TO_WRITABLE_PIXEL_TYPES(GET_WIDTH_AND_HEIGHT_CASE)
@@ -82,8 +82,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 		assert(0 && "unknown pixel type");
 	}
 	zlib_stream_handler zlib_stream;
-	zlib_stream.compress();
-	std::uint_fast8_t interlace_method{
+	const std::uint_fast8_t interlace_method{
 		[this, image_info, width, height, &zlib_stream]() -> std::uint_fast8_t {
 			scanline_data scanlines{ *pointer_to_implementation, image_info, width, height };
 			std::uint_fast8_t interlace_method{ scanlines.filter_data() };
@@ -91,7 +90,10 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 			return interlace_method;
 		} ()
 	};
-	std::uint_fast64_t file_size{
+	zlib_stream.compress();
+	zlib_stream.uncompressed_data.clear();
+	zlib_stream.uncompressed_data.shrink_to_fit();
+	const std::uint_fast64_t file_size{
 		[&zlib_stream]() -> std::uint_fast64_t {
 			std::uint_fast64_t div{ zlib_stream.compressed_data.size() / INT32_MAX }, rem{ zlib_stream.compressed_data.size() % INT32_MAX };
 			std::uint_fast64_t acc{ 45ull + div * (INT32_MAX + 12ull) };
@@ -104,7 +106,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	out.resize(out.size() + file_size);
 	write(position, { 64, file_header });
 	write(position, { 32, 13 });
-	write(position, { 32, IDAT_chunk::type });
+	write(position, { 32, IHDR_chunk::type });
 	write(position, { 32, width });
 	write(position, { 32, height });
 	write(position, { 8, static_cast<std::uint_fast64_t>(image_info) & 0b1'1111 });
@@ -114,14 +116,15 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	write(position, { 8, interlace_method });
 	write(position, { 32, crc32({ position - 17, position }) });
 	const std::uint8_t* const end_of_zlib_stream{ zlib_stream.compressed_data.data() + zlib_stream.compressed_data.size() };
-	while (file_size) {
-		std::uint_fast64_t writing_size{ std::min(file_size, static_cast<std::uint_fast64_t>(INT32_MAX)) };
-		file_size -= writing_size;
+	std::uint_fast64_t zlib_stream_size{ zlib_stream.compressed_data.size() };
+	while (zlib_stream_size) {
+		std::uint_fast64_t writing_size{ std::min(zlib_stream_size, static_cast<std::uint_fast64_t>(INT32_MAX)) };
 		write(position, { 32, writing_size });
 		write(position, { 32, IDAT_chunk::type });
-		std::memcpy(position, end_of_zlib_stream - writing_size, writing_size);
+		std::memcpy(position, end_of_zlib_stream - zlib_stream_size, writing_size);
 		position += writing_size;
 		write(position, { 32, crc32({ position - writing_size - 4, position }) });
+		zlib_stream_size -= writing_size;
 	}
 	write(position, { 32, 0 });
 	write(position, { 32, IEND_chunk::type });

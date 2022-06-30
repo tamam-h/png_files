@@ -241,26 +241,31 @@ void decompress(std::vector<std::uint8_t>& out, bitwise_readable_stream& compres
 }
 
 void compress(std::vector<std::uint8_t>& out, std::span<const std::uint8_t> uncompressed) {
-	std::size_t size{ uncompressed.size() };
+	std::uint_fast64_t data_size{ uncompressed.size() };
 	const std::uint8_t* source{ uncompressed.data() };
-	while (size) {
-		if (size <= UINT16_MAX) {
-			out.reserve(out.size() + size + 5);
-			std::uint8_t* destination{ out.data() + out.size() };
-			out.resize(out.size() + size + 5);
+	std::uint_fast64_t size{
+		[data_size]() -> std::uint_fast64_t {
+			std::uint_fast64_t div{ data_size / UINT16_MAX }, rem{ data_size % UINT16_MAX };
+			std::uint_fast64_t size{ div * (UINT16_MAX + 5ull) };
+			if (rem) { size += rem + 5ull; }
+			return size;
+		} ()
+	};
+	out.reserve(out.size() + size);
+	std::uint8_t* destination{ out.data() + out.size() };
+	out.resize(out.size() + size);
+	while (data_size) {
+		if (data_size <= UINT16_MAX) {
 			destination[0] = 1;
 			++destination;
-			destination[0] = size & 0xFF;
-			destination[1] = (size & 0xFF00) >> 8;
+			destination[0] = data_size & 0xFF;
+			destination[1] = (data_size & 0xFF00) >> 8;
 			destination[2] = ~destination[0];
 			destination[3] = ~destination[1];
 			destination += 4;
-			std::memcpy(destination, source, size);
-			size = 0;
+			std::memcpy(destination, source, data_size);
+			data_size = 0;
 		} else {
-			out.reserve(out.size() + UINT16_MAX + 5);
-			std::uint8_t* destination{ out.data() + out.size() };
-			out.resize(out.size() + UINT16_MAX + 5);
 			destination[0] = 0;
 			++destination;
 			destination[0] = 0xFF;
@@ -269,8 +274,9 @@ void compress(std::vector<std::uint8_t>& out, std::span<const std::uint8_t> unco
 			destination[3] = 0x00;
 			destination += 4;
 			std::memcpy(destination, source, UINT16_MAX);
-			size -= UINT16_MAX;
+			data_size -= UINT16_MAX;
 			source += UINT16_MAX;
+			destination += UINT16_MAX;
 		}
 	}
 }

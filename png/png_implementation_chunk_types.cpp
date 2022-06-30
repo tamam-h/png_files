@@ -11,7 +11,6 @@
 case pixel_type_number::type:\
 	return pixel_type_hash::type;
 
-// throws if there is no pixel_type_hash that corresponds with in
 pixel_type_hash to_pixel_type_hash(pixel_type_number in) {
 	switch (in) {
 	APPLY_TO_WRITABLE_PIXEL_TYPES(CONVERT_NUMBER_TO_HASH_CASE)
@@ -162,7 +161,7 @@ dimension_struct interlaced_dimensions(std::uint_fast8_t reduced_image_number, d
 			return dimensions;
 		} ()
 	};
-	dimension_struct first_dimension{ (in.width - 1 >> 3) * dimensions[reduced_image_number][7][7].width, (in.height - 1 >> 3) * dimensions[reduced_image_number][7][7].height };
+	dimension_struct first_dimension{ ((in.width - 1) >> 3) * dimensions[reduced_image_number][7][7].width, ((in.height - 1) >> 3) * dimensions[reduced_image_number][7][7].height };
 	small_dimension_struct second_dimension{ dimensions[reduced_image_number][(in.height - 1) & 0b111][(in.width - 1) & 0b111] };
 	if (in.height > 8) {
 		second_dimension.width = dimensions[reduced_image_number][7][(in.width - 1) & 0b111].width;
@@ -249,29 +248,51 @@ scanline_data::scanline_data(const image_construction_data& construction_data, s
 	}
 }
 
+#define CONSTRUCT_SCANLINE_DATA_FROM_IMAGE_DATA_CASE(type)\
+case pixel_type_hash::type:\
+	{\
+		bytes_per_pixel = integral_pixel_size<type>;\
+		scanlines[0].resize(height);\
+		const std::vector<std::vector<type>>& arr{ in.get_array<type>() };\
+		assert(arr.size() == height && "input image does not match height given");\
+		std::uint_fast64_t scanline_size{ static_cast<std::uint_fast64_t>(width) * bytes_per_pixel };\
+		scanline_size = 1 + (scanline_size >> 3) + static_cast<bool>(scanline_size & 0b111);\
+		if constexpr (integral_pixel_size<type> < 0b1000) {\
+			assert(0b1000 % bytes_per_pixel == 0 && "if size is less than one byte per pixel, a whole number of pixels should fit in a byte");\
+			for (std::uint_fast32_t i{ 0 }; i < height; ++i) {\
+				scanlines[0][i].resize(scanline_size);\
+				assert(arr[i].size() == width && "input image does not match width given");\
+				for (std::uint_fast32_t j{ 0 }; j < width; ++j) {\
+					scanlines[0][i][1ull + (static_cast<std::uint_fast64_t>(j) * bytes_per_pixel >> 3)] |= to_integral_pixel(arr[i][j]) << (8 - ((static_cast<std::uint_fast64_t>(j) * bytes_per_pixel) & 0b111) - bytes_per_pixel);\
+				}\
+			}\
+		} else {\
+			assert((bytes_per_pixel & 0b111) == 0 && "should be an integer number of bytes");\
+			for (std::uint_fast32_t i{ 0 }; i < height; ++i) {\
+				scanlines[0][i].resize(scanline_size);\
+				assert(arr[i].size() == width && "input image does not match width given");\
+				std::uint8_t* position{ scanlines[0][i].data() + 1 };\
+				for (std::uint_fast32_t j{ 0 }; j < width; ++j) {\
+					write(position, { bytes_per_pixel, to_integral_pixel(arr[i][j]) });\
+				}\
+			}\
+		}\
+	}\
+	break;
+
 scanline_data::scanline_data(const image_data& in, pixel_type_hash contained_type, std::uint_fast32_t width, std::uint_fast32_t height)
-	: construction_data{ width, height, static_cast<std::uint_fast8_t>(static_cast<std::uint_fast64_t>(contained_type) & 0b111), static_cast<std::uint_fast8_t>((static_cast<std::uint_fast64_t>(contained_type) & 0b11111000) >> 3),
-		0, 1, {} } {
+	: construction_data{ width, height, static_cast<std::uint_fast8_t>(static_cast<std::uint_fast64_t>(contained_type) & 0b111), static_cast<std::uint_fast8_t>((static_cast<std::uint_fast64_t>(contained_type) & 0b1111'1000) >> 3),
+		0, 1, {} }, scanlines{ {} } {
 	assert(contained_type != pixel_type_hash::indexed_colour_1 && contained_type != pixel_type_hash::indexed_colour_2 && contained_type != pixel_type_hash::indexed_colour_4 && contained_type != pixel_type_hash::indexed_colour_8
 		&& "index pixel types are not implemented");
 	assert(to_pixel_type_hash(in.get_pixel_type()) == contained_type && "passed contained_type does not match the contained type of in");
+	assert(height >= 1 && height <= INT32_MAX && "height is not in range of what is expected");
+	assert(width >= 1 && width <= INT32_MAX && "width is not in range of what is expected");
 	bytes_back = std::max(construction_data.bit_depth, static_cast<std::uint_fast8_t>(0b1000)) >> 3;
 	switch (contained_type) {
-	case pixel_type_hash::greyscale_1:
-		{
-			bytes_per_pixel = integral_pixel_size<greyscale_1>;
-			scanlines[0].resize(height);
-			const std::vector<std::vector<greyscale_1>>& arr{ in.get_array<greyscale_1>() };
-			std::uint_fast64_t scanline_size{ static_cast<std::uint_fast64_t>(width) * bytes_per_pixel };
-			scanline_size = 1 + (scanline_size >> 3) + static_cast<bool>(scanline_size & 0b111);
-			for (std::uint_fast32_t i{ 0 }; i < height; ++i) {
-				scanlines[0][i][0] = 0;
-				for (std::uint_fast32_t j{ 0 }; j < width; ++j) {
-					integral_pixel_info converted{ to_integral_pixel(arr[i][j]) };
-					// scanlines[0][i][j + 1ull] |= converted.value << 8 - bytes_per_pixel * ((j << ) % bytes_per_pixel) - bytes_per_pixel;
-				}
-			}
-		}
+	APPLY_TO_WRITABLE_PIXEL_TYPES(CONSTRUCT_SCANLINE_DATA_FROM_IMAGE_DATA_CASE)
+	default:
+		assert(0 && "unknown pixel type");
 	}
 }
 
@@ -284,7 +305,7 @@ std::uint_fast64_t get_pixel(const std::vector<std::vector<std::uint8_t>>& reduc
 	++byte_index;
 	assert(byte_index < scanline.size() && "out of range");
 	const std::uint8_t* position{ scanline.data() + byte_index };
-	if (bytes_per_pixel < 0b1000) { return (*position & ((1 << bytes_per_pixel) - 1 << 8 - bit_index - bytes_per_pixel)) >> 8 - bit_index - bytes_per_pixel; }
+	if (bytes_per_pixel < 0b1000) { return (*position & (((1 << bytes_per_pixel) - 1) << (8 - bit_index - bytes_per_pixel))) >> (8 - bit_index - bytes_per_pixel); }
 	assert(bit_index == 0 && "should be at a byte boundary");
 	std::uint_fast64_t acc{ 0 };
 	while (bytes_per_pixel) {
@@ -349,7 +370,7 @@ void scanline_data::write_to(image_data& out) const {
 }
 
 void scanline_data::write_to(std::vector<std::uint8_t>& out) const {
-	std::uint_fast16_t size{ 0 };
+	std::uint_fast64_t size{ 0 };
 	for (const std::vector<std::vector<std::uint8_t>>& reduced_image : scanlines) {
 		if (reduced_image.empty()) { continue; }
 		std::uint_fast64_t scanline_size{ reduced_image[0].size() };
@@ -423,7 +444,7 @@ std::uint_fast8_t scanline_data::filter_data() {
 	assert(scanlines.size() == 1 && "unimplemented when there is more than one reduced image");
 	assert(scanlines[0].size() && "height of the image should be greater than or equal to one");
 	assert(scanlines[0].size() <= INT32_MAX + 1ull && "height of the image is larger than expected");
-	std::uint_fast64_t scanline_size{ scanlines[0].size() };
+	std::uint_fast64_t scanline_size{ scanlines[0][0].size() };
 	assert(scanline_size > 1 && "scanline size is smaller than expected");
 	assert(scanline_size <= INT32_MAX + 1ull && "scanline size is greater than expected");
 	for (std::vector<std::uint8_t>& i : scanlines[0]) {
