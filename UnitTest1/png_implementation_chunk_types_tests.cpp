@@ -7,7 +7,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace chunk_types_tests {
+namespace png_implementation_chunk_types_tests {
 	bool operator==(const dimension_struct& first, const dimension_struct& second) {
 		return first.width == second.width && first.height == second.height;
 	}
@@ -39,7 +39,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"can\'t have a zero dimension");
 		}
 		TEST_METHOD(construct_IHDR_test_3) {
 			std::vector<std::uint8_t> data(13);
@@ -56,7 +56,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"16 bit depth is not allowed with colour type 3");
 		}
 		TEST_METHOD(construct_IHDR_test_4) {
 			std::vector<std::uint8_t> data(13);
@@ -74,7 +74,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"compression method 4 is not allowed");
 		}
 		TEST_METHOD(construct_IHDR_test_5) {
 			std::vector<std::uint8_t> data(13);
@@ -93,7 +93,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"filter method 4 is not allowed");
 		}
 		TEST_METHOD(construct_IHDR_test_6) {
 			std::vector<std::uint8_t> data(13);
@@ -113,7 +113,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"interlace method 4 is not allowed");
 		}
 		TEST_METHOD(construct_IHDR_test_7) {
 			std::vector<std::uint8_t> data(12);
@@ -130,7 +130,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"chunk is smaller than expected");
 		}
 		TEST_METHOD(construct_IHDR_test_8) {
 			std::vector<std::uint8_t> data(14);
@@ -147,7 +147,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"chunk is larger than expected");
 		}
 		TEST_METHOD(construct_IHDR_test_9) {
 			std::vector<std::uint8_t> data(13);
@@ -165,7 +165,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"there can\'t be two IHDR chunks");
 		}
 	};
 	TEST_CLASS(construct_PLTE_tests) {
@@ -188,7 +188,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"PLTE chunk has more entries than allowed");
 		}
 		TEST_METHOD(construct_PLTE_test_3) {
 			std::vector<std::unique_ptr<chunk_base>> vector;
@@ -202,7 +202,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"there can\'t be two PLTE chunks");
 		}
 		TEST_METHOD(construct_PLTE_test_4) {
 			std::vector<std::unique_ptr<chunk_base>> vector;
@@ -214,7 +214,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"there can\'t be a PLTE chunk if there is no IHDR chunk");
 		}
 		TEST_METHOD(construct_PLTE_test_5) {
 			std::vector<std::unique_ptr<chunk_base>> vector;
@@ -228,7 +228,20 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"PLTE chunk can\'t come after IDAT chunks");
+		}
+		TEST_METHOD(construct_PLTE_test_6) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			std::vector<std::uint8_t> data(230);
+			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() };
+			bool should_fail{ 1 };
+			try {
+				construct_PLTE(span, vector);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail, L"size of data in PLTE chunk should be a multiple of 3");
 		}
 	};
 	TEST_CLASS(construct_IDAT_tests) {
@@ -262,14 +275,28 @@ namespace chunk_types_tests {
 			std::vector<std::uint8_t> data{ curr.compressed_data };
 			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() - 1 };
 			vector.push_back(construct_IDAT(span, vector));
-			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ IHDR_chunk::type } });
+			vector.push_back(std::unique_ptr<chunk_base>{ new unknown_chunk{ 'A' << 24 | 'A' << 16 | 'A' << 8 | 'A' } });
 			bool should_fail{ 1 };
 			try {
 				construct_IDAT({ data.data() + data.size() - 1, data.data() + data.size() }, vector);
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"if there are already IDAT chunks in the stream, they must be at the end of the vector");
+		}
+		TEST_METHOD(construct_IDAT_test_4) {
+			std::vector<std::unique_ptr<chunk_base>> vector;
+			zlib_stream_handler curr; curr.uncompressed_data.resize(363);
+			curr.compress();
+			std::vector<std::uint8_t> data{ curr.compressed_data };
+			std::span<std::uint8_t> span{ data.data(), data.data() + data.size() - 1 };
+			bool should_fail{ 1 };
+			try {
+				construct_IDAT({ data.data() + data.size() - 1, data.data() + data.size() }, vector);
+			} catch (...) {
+				should_fail = 0;
+			}
+			Assert::IsFalse(should_fail, L"there should be an IHDR chunk before an IDAT chunk");
 		}
 	};
 	TEST_CLASS(construct_IEND_tests) {
@@ -292,7 +319,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"IEND chunks should have a size of zero");
 		}
 		TEST_METHOD(construct_IEND_test_3) {
 			std::vector<std::unique_ptr<chunk_base>> vector;
@@ -304,7 +331,7 @@ namespace chunk_types_tests {
 			} catch (...) {
 				should_fail = 0;
 			}
-			Assert::IsFalse(should_fail);
+			Assert::IsFalse(should_fail, L"there should be an IDAT chunk in the vector");
 		}
 	};
 	TEST_CLASS(interlaced_dimensions_tests) {

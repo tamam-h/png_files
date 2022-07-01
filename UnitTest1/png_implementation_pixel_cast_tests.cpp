@@ -5,7 +5,7 @@
 #include <CppUnitTest.h>
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace pixel_cast_tests {
+namespace png_implementation_pixel_cast_tests {
 	bool operator==(const integral_pixel_info& first, const integral_pixel_info& second) {
 		return first.bytes == second.bytes && first.value == second.value;
 	}
@@ -42,13 +42,13 @@ namespace pixel_cast_tests {
 			Assert::IsTrue(first.grey == casted.blue);
 		}
 		TEST_METHOD(pixel_cast_test_7) {
-			greyscale_float first{ 25.0 / 255.0 };
+			greyscale_float first{ static_cast<decltype(greyscale_float{}.grey)>(25.0 / 255.0) };
 			greyscale_with_alpha_8 casted{ pixel_cast<greyscale_with_alpha_8>(first) };
 			Assert::IsTrue(static_cast<std::uint8_t>(255) == casted.alpha);
 			Assert::IsTrue(static_cast<std::uint8_t>(25) == casted.grey);
 		}
 		TEST_METHOD(pixel_cast_test_8) {
-			truecolour_float first{ 1, 58.0 / 255.0, 234.0 / 255.0 };
+			truecolour_float first{ static_cast<decltype(truecolour_float{}.red)>(1), static_cast<decltype(truecolour_float{}.green)>(58.0 / 255.0), static_cast<decltype(truecolour_float{}.blue)>(234.0 / 255.0) };
 			truecolour_with_alpha_8 casted{ pixel_cast<truecolour_with_alpha_8>(first) };
 			Assert::IsTrue(static_cast<std::uint8_t>(255) == casted.red);
 			Assert::IsTrue(static_cast<std::uint8_t>(58) == casted.green);
