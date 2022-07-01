@@ -85,7 +85,7 @@ case pixel_type_hash::type:\
 
 void png::write_to(std::vector<std::uint8_t>& out) const {
 	const pixel_type_hash image_info{ to_pixel_type_hash(get_pixel_type()) };
-	std::uint_fast32_t width{}, height{};
+	std::uint_fast32_t width{}, height{}, gamma{ get_gamma() };
 	switch (image_info) {
 	APPLY_TO_WRITABLE_PIXEL_TYPES(GET_WIDTH_AND_HEIGHT_CASE)
 	default:
@@ -104,10 +104,11 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	zlib_stream.uncompressed_data.clear();
 	zlib_stream.uncompressed_data.shrink_to_fit();
 	const std::uint_fast64_t file_size{
-		[&zlib_stream]() -> std::uint_fast64_t {
+		[&zlib_stream, gamma]() -> std::uint_fast64_t {
 			std::uint_fast64_t div{ zlib_stream.compressed_data.size() / INT32_MAX }, rem{ zlib_stream.compressed_data.size() % INT32_MAX };
-			std::uint_fast64_t acc{ 61ull + div * (INT32_MAX + 12ull) };
+			std::uint_fast64_t acc{ 45ull + div * (INT32_MAX + 12ull) };
 			if (rem) { acc += rem + 12ull; }
+			if (gamma) { acc += 16; }
 			return acc;
 		} ()
 	};
@@ -125,10 +126,12 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	write(position, { 8, 0 });
 	write(position, { 8, interlace_method });
 	write(position, { 32, crc32({ position - 17, position }) });
-	write(position, { 32, 4 });
-	write(position, { 32, gAMA_chunk::type });
-	write(position, { 32, get_gamma() });
-	write(position, { 32, crc32({ position - 8, position }) });
+	if (gamma) {
+		write(position, { 32, 4 });
+		write(position, { 32, gAMA_chunk::type });
+		write(position, { 32, get_gamma() });
+		write(position, { 32, crc32({ position - 8, position }) });
+	}
 	const std::uint8_t* const end_of_zlib_stream{ zlib_stream.compressed_data.data() + zlib_stream.compressed_data.size() };
 	std::uint_fast64_t zlib_stream_size{ zlib_stream.compressed_data.size() };
 	while (zlib_stream_size) {
