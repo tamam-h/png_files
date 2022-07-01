@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClInclude Include="png.hpp" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="png_implementation_ancillary_chunk_types.hpp" />
     <ClInclude Include="png_implementation_bitwise_readable_stream.hpp" />
     <ClInclude Include="png_implementation_chunk_factory.hpp" />
     <ClInclude Include="png_implementation_chunk_types.hpp" />
@@ -164,6 +165,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="png.cpp" />
+    <ClCompile Include="png_implementation_ancillary_chunk_types.cpp" />
     <ClCompile Include="png_implementation_bitwise_readable_stream.cpp" />
     <ClCompile Include="png_implementation_chunk_factory.cpp" />
     <ClCompile Include="png_implementation_chunk_types.cpp" />

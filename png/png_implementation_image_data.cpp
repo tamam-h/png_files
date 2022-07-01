@@ -22,12 +22,14 @@ template <pixel_type type> void image_data::convert_to() {
 			using first_held_type = typename std::decay_t<decltype(data)>::value_type;
 			using held_type = typename first_held_type::value_type;
 			converted.reserve(data.size());
-			for (const std::vector<held_type>& i : data) {
+			for (std::vector<held_type>& i : data) {
 				converted.emplace_back();
 				converted.reserve(i.size());
 				for (const held_type& j : i) {
 					converted.back().emplace_back(pixel_cast<type, held_type>(j));
 				}
+				i.clear();
+				i.shrink_to_fit();
 			}
 		}, variant);
 		variant.emplace<std::vector<std::vector<type>>>(std::move(converted));

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "png.hpp"
+#include "png_implementation_ancillary_chunk_types.hpp"
 #include "png_implementation_chunk_factory.hpp"
 #include "png_implementation_chunk_types.hpp"
 #include "png_implementation_image_data.hpp"
@@ -50,6 +51,7 @@ png::png(std::span<const std::uint8_t> in) : pointer_to_implementation{ new impl
 	static const int chunk_registration{
 		[]() -> int {
 			register_chunk_types();
+			register_ancillary_chunk_types();
 			return 0;
 		} ()
 	};
@@ -59,6 +61,14 @@ png::png(std::span<const std::uint8_t> in) : pointer_to_implementation{ new impl
 }
 
 png::~png() {}
+
+std::uint_fast32_t& png::get_gamma() noexcept {
+	return pointer_to_implementation->colour_info.gamma;
+}
+
+const std::uint_fast32_t& png::get_gamma() const noexcept {
+	return pointer_to_implementation->colour_info.gamma;
+}
 
 #define GET_WIDTH_AND_HEIGHT_CASE(type)\
 case pixel_type_hash::type:\
@@ -96,7 +106,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	const std::uint_fast64_t file_size{
 		[&zlib_stream]() -> std::uint_fast64_t {
 			std::uint_fast64_t div{ zlib_stream.compressed_data.size() / INT32_MAX }, rem{ zlib_stream.compressed_data.size() % INT32_MAX };
-			std::uint_fast64_t acc{ 45ull + div * (INT32_MAX + 12ull) };
+			std::uint_fast64_t acc{ 61ull + div * (INT32_MAX + 12ull) };
 			if (rem) { acc += rem + 12ull; }
 			return acc;
 		} ()
@@ -115,6 +125,10 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	write(position, { 8, 0 });
 	write(position, { 8, interlace_method });
 	write(position, { 32, crc32({ position - 17, position }) });
+	write(position, { 32, 4 });
+	write(position, { 32, gAMA_chunk::type });
+	write(position, { 32, get_gamma() });
+	write(position, { 32, crc32({ position - 8, position }) });
 	const std::uint8_t* const end_of_zlib_stream{ zlib_stream.compressed_data.data() + zlib_stream.compressed_data.size() };
 	std::uint_fast64_t zlib_stream_size{ zlib_stream.compressed_data.size() };
 	while (zlib_stream_size) {

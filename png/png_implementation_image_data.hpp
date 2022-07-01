@@ -5,6 +5,11 @@
 #include <vector>
 #include "png_implementation_pixel_types.hpp"
 
+struct colour_info_struct {
+	// a value equal to gamma times 100'000
+	std::uint_fast32_t gamma{ 0 };
+};
+
 struct image_data {
 	// converts internal representation of image_data to a different pixel type
 	template <pixel_type type> void convert_to();
@@ -16,6 +21,7 @@ struct image_data {
 	template <pixel_type type> const std::vector<std::vector<type>>& get_array() const;
 	// returns a pixel_type_number indicating the internal representation of image_data
 	pixel_type_number get_pixel_type() const noexcept;
+	colour_info_struct colour_info;
 private:
 	template <pixel_type type> using v = std::vector<std::vector<type>>;
 	// order is important

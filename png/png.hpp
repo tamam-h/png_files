@@ -18,6 +18,10 @@ struct png {
 	void convert_to(pixel_type_number in);
 	// returns a pixel_type_number indicating the internal representation of image_data
 	pixel_type_number get_pixel_type() const noexcept;
+	// returns a reference to a std::uint_fast32_t that is 100'000 times the gamma of the image
+	std::uint_fast32_t& get_gamma() noexcept;
+	// returns a reference to a const std::uint_fast32_t that is 100'000 times the gamma of the image
+	const std::uint_fast32_t& get_gamma() const noexcept;
 	// writes png file to out
 	// assumes internal array is rectangular
 	void write_to(std::vector<std::uint8_t>& out) const;
