@@ -282,7 +282,7 @@ case pixel_type_hash::type:\
 
 scanline_data::scanline_data(const image_data& in, pixel_type_hash contained_type, std::uint_fast32_t width, std::uint_fast32_t height)
 	: construction_data{ width, height, static_cast<std::uint_fast8_t>(static_cast<std::uint_fast64_t>(contained_type) & 0b111), static_cast<std::uint_fast8_t>((static_cast<std::uint_fast64_t>(contained_type) & 0b1111'1000) >> 3),
-		0, 1, {} }, scanlines{ {} } {
+		0, 1, {} }, scanlines{ {} }, bytes_per_pixel{} {
 	assert(contained_type != pixel_type_hash::indexed_colour_1 && contained_type != pixel_type_hash::indexed_colour_2 && contained_type != pixel_type_hash::indexed_colour_4 && contained_type != pixel_type_hash::indexed_colour_8
 		&& "index pixel types are not implemented");
 	assert(to_pixel_type_hash(in.get_pixel_type()) == contained_type && "passed contained_type does not match the contained type of in");

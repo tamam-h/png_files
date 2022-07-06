@@ -129,7 +129,7 @@ void png::write_to(std::vector<std::uint8_t>& out) const {
 	if (gamma) {
 		write(position, { 32, 4 });
 		write(position, { 32, gAMA_chunk::type });
-		write(position, { 32, get_gamma() });
+		write(position, { 32, gamma });
 		write(position, { 32, crc32({ position - 8, position }) });
 	}
 	const std::uint8_t* const end_of_zlib_stream{ zlib_stream.compressed_data.data() + zlib_stream.compressed_data.size() };
